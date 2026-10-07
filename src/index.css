@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paw-50: #fff7ed;
+  --color-paw-100: #ffedd5;
+  --color-paw-500: #f97316;
+  --color-paw-600: #ea580c;
+  --color-paw-700: #c2410c;
+}
+
+html, body, #root { height: 100%; }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }
+@keyframes pop { 0% { transform: translateY(8px) scale(.96); opacity: 0 } 100% { transform: none; opacity: 1 } }
+.animate-pop { animation: pop .18s ease-out; }

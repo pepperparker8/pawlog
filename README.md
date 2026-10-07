@@ -1,68 +1,64 @@
 # PawLog
 
-Raise your cat. A personal cat-care tracker that turns preventive care into a game.
+Multi-cat health, care and memory platform. Households share cats, log daily care in a few taps, keep a medical passport per cat, and earn XP for consistent care.
 
-Every cat gets a profile card like an RPG character. The owner earns XP for doing the care, not for the cat being "healthy". Over months, the app becomes a digital life story for each cat.
+PawLog records observations. It does not diagnose, score health, or replace a veterinarian.
 
-```
-Milo                          Gipi
-Lv. 8 — British Shorthair     Lv. 6 — Minuet × BSH
-3.5 kg                        1.24 kg
-Growth: 87%                   Growth: 76%
-Wellness: 94                  Wellness: 81
-Mood: Playful                 Mood: Shy
-Care Streak: 12 days          Care Streak: 8 days
-```
+## Features
 
-Wellness is a care/engagement score, never a medical diagnosis.
+- Households with owner, caregiver and viewer roles, invites by link, multiple households per user
+- Multi-cat dashboard with attention center, today counters, daily quests and "on this day" memories
+- Quick Log bottom sheet: feeding, water, litter, weight, symptoms, medication, behavior, grooming, play, journal; log for one cat or everyone at once
+- Cat profile with timeline, health records, growth chart, photos and a printable passport
+- Unified timeline with filters and pagination
+- Health records: medications, conditions, vet visits, vaccinations, parasite treatments
+- Care scheduler with recurring tasks and assignees
+- Food profiles, photo library in private Storage, global search, vet summary
+- Gamification: XP ledger, levels, badges, quests, forgiving streaks with freezes
+- Notifications, realtime refresh, PWA install and an offline log queue
 
-## Core ideas
+## Stack
 
-1. **XP from caring, not from health.** Weigh, scoop, groom, medicate, vaccinate, log food and litter, play, photograph the coat. Each action gives XP. See [docs/xp-and-levels.md](docs/xp-and-levels.md).
-2. **Growth Journey.** Weight chart with automatic milestones (2 kg Club, 3 kg Club) and sentences like "Milo gained 1.17 kg over the last 58 days."
-3. **Daily Quest.** 3 to 5 small tasks each morning. Completing them extends the Care Streak. A weekly summary reports care completion.
-4. **Pet personality.** Traits per cat ("The Chill One", "The Shy One"), learned from logged data over time.
-5. **Health Timeline.** Month-by-month story view instead of a flat medical record.
-6. **Health Passport.** One page per cat with vaccinations, deworming, parasite control, medication, allergies, vet visits, sterilization, blood tests, dental, microchip. Export as a 1 to 2 page vet PDF.
-7. **Care Streak, three tiers.** Daily streak, weekly completion %, lifetime Care XP. Achievements on top. Not Duolingo-aggressive.
-8. **Relationship between cats.** Milo × Gipi score and a socialization timeline.
-9. **Owner Care Level.** XP from consistency unlocks owner titles.
-10. **AI insight.** "Something changed" notes from the data: weight velocity, appetite below 30-day average, weight flat despite normal intake. Never a diagnosis.
-11. **On This Day.** Each app open shows what each cat looked like weeks or months ago.
+Vite, React 19, TypeScript, Tailwind CSS v4, TanStack Query, React Router, Recharts, Supabase (Auth, Postgres, Storage, Realtime), vite-plugin-pwa, Vitest.
 
-Full concept: [docs/concept.md](docs/concept.md).
+## Getting started
 
-## App structure
+Requirements: Node 20 or newer and a Supabase project.
 
-```
-Home        Milo ❤️ Gipi, On This Day, Today's Quest
-Today       Feeding, Water, Litter, Play, Grooming
-Health      Weight, Appetite, Stool, Urine, Symptoms
-Growth      Weight chart, Milestones, Body condition
-Care        Vaccines, Deworming, Parasite, Medication, Grooming
-Journal     Photos, Notes, Timeline
-Insights    Trends, Anomalies, AI summary
-Achievements XP, Streak, Badges
+```bash
+npm install
 ```
 
-## Repository layout
-
-```
-prototype/      Static HTML click-through prototype (open index.html in a browser)
-docs/           Concept, XP rules, data model, roadmap
-supabase/       Supabase config and SQL migrations (schema + row-level security)
+```bash
+cp .env.example .env
 ```
 
-## Status
+Fill `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from Supabase Project Settings, API. Only the anon or publishable key belongs in the frontend.
 
-Concept and prototype stage. No application code yet. The data model is defined in [supabase/migrations](supabase/migrations) and explained in [docs/data-model.md](docs/data-model.md).
+Apply the migrations in `supabase/migrations` in order (`001` to `006`). On a project that still has the original single-owner schema, run `000_reset_legacy.sql` first.
 
-## Planned stack
+```bash
+npm run dev
+```
 
-- Supabase: Auth, Postgres, Storage (photos), row-level security per owner
-- Frontend: to be decided (mobile-first web/PWA or Expo)
-- PDF export for the vet report generated server-side
+After signing up, choose "Load demo household" on the home screen to seed a household with sample cats and history.
 
-## Roadmap
+## Scripts
 
-See [docs/roadmap.md](docs/roadmap.md).
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` | Type check and production build |
+| `npm run test` | Unit tests |
+| `npm run lint` | oxlint |
+| `npm run types` | Regenerate `src/lib/database.types.ts` from Supabase |
+
+Database security tests live in `supabase/tests/rls.sql` and run with psql against a development database.
+
+## Documentation
+
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+- [DATABASE.md](DATABASE.md)
+- [SECURITY.md](SECURITY.md)
+- [GAMIFICATION.md](GAMIFICATION.md)
+- [ROADMAP.md](ROADMAP.md)

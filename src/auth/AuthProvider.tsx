@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { queryClient } from '../lib/queryClient'
+import { appUrl } from '../lib/appUrl'
 
 interface AuthCtx {
   session: Session | null
   user: User | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, displayName: string) => Promise<{ needsConfirm: boolean }>
-  signInWithMagicLink: (email: string) => Promise<void>
+  sendCode: (email: string) => Promise<void>
+  verifyCode: (email: string, token: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -30,17 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AuthCtx>(() => ({
     session, user: session?.user ?? null, loading,
-    async signIn(email, password) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+    // Passwordless: one email carries both a sign-in link and a code. New emails get an account.
+    async sendCode(email) {
+      const { error } = await supabase.auth.signInWithOtp({
+        email, options: { emailRedirectTo: appUrl(), shouldCreateUser: true },
+      })
       if (error) throw error
     },
-    async signUp(email, password, displayName) {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } })
-      if (error) throw error
-      return { needsConfirm: !data.session }
-    },
-    async signInWithMagicLink(email) {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+    async verifyCode(email, token) {
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
       if (error) throw error
     },
     async signOut() { await supabase.auth.signOut() },

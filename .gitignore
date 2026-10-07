@@ -26,3 +26,6 @@ build/
 
 # local tooling
 .claude/
+
+# Personal data imports
+supabase/private/

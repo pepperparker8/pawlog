@@ -4,27 +4,25 @@ import { Button, ErrorNote, Field, Input } from '../components/ui'
 import { friendlyError } from '../lib/errors'
 import { supabaseConfigured } from '../lib/supabase'
 
-type Mode = 'signin' | 'signup' | 'magic'
-
+// Same flow as the email: tap the link on this device, or type the code it contains.
 export function LoginPage() {
-  const { signIn, signUp, signInWithMagicLink } = useAuth()
-  const [mode, setMode] = useState<Mode>('signin')
+  const { sendCode, verifyCode } = useAuth()
+  const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
 
-  async function submit(e: FormEvent) {
-    e.preventDefault(); setBusy(true); setError(null); setInfo(null)
-    try {
-      if (mode === 'signin') await signIn(email, password)
-      else if (mode === 'signup') {
-        const r = await signUp(email, password, name || email.split('@')[0])
-        if (r.needsConfirm) setInfo('Check your inbox to confirm your email, then sign in.')
-      } else { await signInWithMagicLink(email); setInfo('Magic link sent. Open it on this device.') }
-    } catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
+  async function send(e?: FormEvent) {
+    e?.preventDefault(); setBusy(true); setError(null)
+    try { await sendCode(email.trim().toLowerCase()); setStep('code'); setCode('') }
+    catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
+  }
+
+  async function verify(e: FormEvent) {
+    e.preventDefault(); setBusy(true); setError(null)
+    try { await verifyCode(email.trim().toLowerCase(), code.trim()) }
+    catch (err) { setError(friendlyError(err)) } finally { setBusy(false) }
   }
 
   return (
@@ -35,26 +33,30 @@ export function LoginPage() {
         <p className="text-sm text-stone-500">Every cat. Every day. One shared log.</p>
       </div>
       {!supabaseConfigured && <ErrorNote message="Supabase is not configured. Copy .env.example to .env and fill in the keys." />}
-      <form onSubmit={submit} className="space-y-3">
-        {mode === 'signup' && (
-          <Field label="Your name"><Input value={name} onChange={e => setName(e.target.value)} placeholder="Cat parent" autoComplete="name" /></Field>
-        )}
-        <Field label="Email"><Input type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" inputMode="email" /></Field>
-        {mode !== 'magic' && (
-          <Field label="Password"><Input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)}
-            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} /></Field>
-        )}
-        <ErrorNote message={error} />
-        {info && <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{info}</p>}
-        <Button type="submit" loading={busy} className="w-full">
-          {mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send magic link'}
-        </Button>
-      </form>
-      <div className="mt-6 flex flex-col gap-2 text-center text-sm text-stone-600">
-        {mode !== 'signin' && <button onClick={() => setMode('signin')} className="underline">Have an account? Sign in</button>}
-        {mode !== 'signup' && <button onClick={() => setMode('signup')} className="underline">New here? Create an account</button>}
-        {mode !== 'magic' && <button onClick={() => setMode('magic')} className="underline">Email me a magic link</button>}
-      </div>
+      {step === 'email' ? (
+        <form onSubmit={send} className="space-y-3">
+          <Field label="Email"><Input type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoFocus /></Field>
+          <ErrorNote message={error} />
+          <Button type="submit" loading={busy} className="w-full">Email me a sign-in link</Button>
+          <p className="text-center text-xs text-stone-500">No password. New emails get an account automatically.</p>
+        </form>
+      ) : (
+        <form onSubmit={verify} className="space-y-3">
+          <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            We sent an email to {email}. Tap the link in it on this device, or type the code from the email below.
+          </p>
+          <Field label="Code">
+            <Input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} inputMode="numeric" autoComplete="one-time-code"
+              minLength={6} maxLength={10} required autoFocus className="text-center text-2xl tracking-[0.4em]" />
+          </Field>
+          <ErrorNote message={error} />
+          <Button type="submit" loading={busy} className="w-full">Sign in</Button>
+          <div className="flex justify-between text-sm text-stone-600">
+            <button type="button" onClick={() => { setStep('email'); setError(null) }} className="underline">Different email</button>
+            <button type="button" onClick={() => send()} disabled={busy} className="underline">Send again</button>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

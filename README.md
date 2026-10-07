@@ -35,13 +35,22 @@ cp .env.example .env
 
 Fill `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from Supabase Project Settings, API. Only the anon or publishable key belongs in the frontend.
 
-Apply the migrations in `supabase/migrations` in order (`001` to `006`). On a project that still has the original single-owner schema, run `000_reset_legacy.sql` first.
+Apply the migrations in `supabase/migrations` in order (`001` to `009`). On a project that still has the original single-owner schema, run `000_reset_legacy.sql` first.
 
 ```bash
 npm run dev
 ```
 
-After signing up, choose "Load demo household" on the home screen to seed a household with sample cats and history.
+Sign-in is passwordless: PawLog emails a link and a code, and a new email gets an account. In Supabase Authentication:
+
+- Email Templates: add `{{ .Token }}` to the "Magic Link" and "Confirm signup" templates so the email shows the code.
+- URL Configuration: set Site URL to the deployed app and add `http://localhost:5173/**` and the deployed URL with `/**` to Redirect URLs.
+
+After signing in, choose "Load demo household" on the home screen to seed a household with sample cats and history.
+
+## Deploy
+
+`.github/workflows/pages.yml` builds and publishes to GitHub Pages on every push to `main`. Set the repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, and set Pages source to GitHub Actions.
 
 ## Scripts
 

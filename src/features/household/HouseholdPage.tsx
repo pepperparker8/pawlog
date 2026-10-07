@@ -8,6 +8,7 @@ import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
 import { useCreateHousehold, useCreateInvite, useInvites, useMembers, useRemoveMember, useRenameHousehold, useSeedDemo, useUpdateMemberRole } from './api'
 import type { HouseholdRole } from '../../lib/types'
+import { appUrl } from '../../lib/appUrl'
 
 const ROLE_HELP: Record<HouseholdRole, string> = { owner: 'Full control, manages members', caregiver: 'Logs and edits, no member management', viewer: 'Read-only' }
 
@@ -31,7 +32,7 @@ export function HouseholdPage() {
   const [role, setRole] = useState<HouseholdRole>('caregiver')
   const [newName, setNewName] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const inviteLink = (token: string) => `${window.location.origin}/invite/${token}`
+  const inviteLink = (token: string) => appUrl(`invite/${token}`)
 
   async function copy(token: string) {
     try { await navigator.clipboard.writeText(inviteLink(token)); toast.show('Invite link copied') } catch { toast.show(inviteLink(token)) }

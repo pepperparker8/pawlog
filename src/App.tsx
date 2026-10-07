@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
@@ -27,13 +27,14 @@ import { useRealtime } from './features/notifications/api'
 import { startQueueSync } from './lib/offlineQueue'
 import { useCreateHousehold } from './features/household/api'
 import { friendlyError } from './lib/errors'
+import { rememberReturnPath, takeReturnPath } from './lib/appUrl'
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
             <Routes>
               <Route path="/login" element={<PublicOnly><LoginPage /></PublicOnly>} />
               <Route element={<Protected />}>
@@ -70,13 +71,14 @@ export default function App() {
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   if (loading) return <Spinner className="py-32" />
-  return user ? <Navigate to="/" replace /> : <>{children}</>
+  return user ? <Navigate to={takeReturnPath()} replace /> : <>{children}</>
 }
 
 function Protected() {
   const { user, loading } = useAuth()
+  const location = useLocation()
   if (loading) return <Spinner className="py-32" />
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) { rememberReturnPath(location.pathname); return <Navigate to="/login" replace /> }
   return <HouseholdProvider><Outlet /></HouseholdProvider>
 }
 

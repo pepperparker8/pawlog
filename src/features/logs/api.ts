@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { supabase, untypedDb } from '../../lib/supabase'
 import { invalidateHousehold } from '../../lib/queryClient'
 import { enqueue } from '../../lib/offlineQueue'
 
@@ -51,7 +51,7 @@ export function useSubmitLog() {
 }
 
 export async function deleteLog(table: string, id: string) {
-  const { error } = await supabase.from(table).delete().eq('id', id)
+  const { error } = await untypedDb.from(table).delete().eq('id', id)
   if (error) throw error
 }
 

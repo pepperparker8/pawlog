@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { supabase, PHOTO_BUCKET } from '../../lib/supabase'
+import { supabase, untypedDb, PHOTO_BUCKET } from '../../lib/supabase'
 import { keys, queryClient } from '../../lib/queryClient'
 import type { Cat, CatSummary } from '../../lib/types'
 
@@ -35,8 +35,8 @@ export function useSaveCat(hid: string) {
     mutationFn: async ({ id, ...input }: CatInput & { id?: string }) => {
       const clean = Object.fromEntries(Object.entries(input).map(([k, v]) => [k, v === '' ? null : v]))
       const q = id
-        ? supabase.from('cats').update(clean).eq('id', id).select().single()
-        : supabase.from('cats').insert({ ...clean, household_id: hid }).select().single()
+        ? untypedDb.from('cats').update(clean).eq('id', id).select().single()
+        : untypedDb.from('cats').insert({ ...clean, household_id: hid }).select().single()
       const { data, error } = await q
       if (error) throw error
       return data as Cat

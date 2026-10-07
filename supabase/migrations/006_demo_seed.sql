@@ -98,14 +98,14 @@ begin
   -- Luna: repeated sneezing + vet visit + medication
   select id into cid from cats where household_id = hid and name = 'Luna';
   insert into symptom_logs (household_id, cat_id, logged_at, symptom, severity, created_by)
-  select hid, cid, now() - make_interval(days => d) - interval '8 hours', 'Sneezing', 'mild', uid from generate_series(1, 4) d;
+  select hid, cid, now() - make_interval(days => g.n) - interval '8 hours', 'Sneezing', 'mild', uid from generate_series(1, 4) as g(n);
   insert into vet_visits (household_id, cat_id, visited_on, clinic, vet_name, reason, findings, cost, currency, created_by)
   values (hid, cid, current_date - 2, 'Klinik Hewan Sehat', 'drh. Rina', 'Sneezing for several days', 'Mild upper respiratory signs. Prescribed eye drops and rest. Recheck in 10 days.', 350000, 'IDR', uid);
   insert into cat_medications (household_id, cat_id, name, dose, frequency, times_per_day, start_on, end_on, reason, created_by)
   values (hid, cid, 'Eye drops', '1 drop each eye', 'twice daily', 2, current_date - 2, current_date + 8, 'Vet prescription', uid);
   insert into medication_logs (household_id, cat_id, logged_at, cat_medication_id, medication_name, dose, created_by)
-  select hid, cid, now() - make_interval(days => d) - interval '7 hours', m.id, 'Eye drops', '1 drop each eye', uid
-  from generate_series(0, 1) d, cat_medications m where m.cat_id = cid;
+  select hid, cid, now() - make_interval(days => g.n) - interval '7 hours', m.id, 'Eye drops', '1 drop each eye', uid
+  from generate_series(0, 1) as g(n), cat_medications m where m.cat_id = cid;
 
   -- Oreo: senior, kidney monitoring condition
   select id into cid from cats where household_id = hid and name = 'Oreo';

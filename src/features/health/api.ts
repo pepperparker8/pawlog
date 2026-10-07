@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { supabase, untypedDb } from '../../lib/supabase'
 import { keys, queryClient } from '../../lib/queryClient'
 import type { CatCondition, CatMedication, Milestone, ParasiteTreatment, VaccinationRecord, VetVisit, WeightLog, WeightWeekly } from '../../lib/types'
 
@@ -63,8 +63,8 @@ export function useSaveHealthRow(table: Table, hid: string, catId: string) {
     mutationFn: async ({ id, ...row }: Record<string, unknown> & { id?: string }) => {
       const clean = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v === '' ? null : v]))
       const q = id
-        ? supabase.from(table).update(clean).eq('id', id)
-        : supabase.from(table).insert({ ...clean, household_id: hid, cat_id: catId, client_event_id: crypto.randomUUID() })
+        ? untypedDb.from(table).update(clean).eq('id', id)
+        : untypedDb.from(table).insert({ ...clean, household_id: hid, cat_id: catId, client_event_id: crypto.randomUUID() })
       const { error } = await q
       if (error) throw error
     },

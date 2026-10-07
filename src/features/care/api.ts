@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { supabase, untypedDb } from '../../lib/supabase'
 import { keys, queryClient, invalidateHousehold } from '../../lib/queryClient'
 import type { CareTask, FoodProfile } from '../../lib/types'
 
@@ -19,7 +19,7 @@ export function useSaveCareTask(hid: string) {
   return useMutation({
     mutationFn: async ({ id, ...row }: Partial<CareTask> & { name: string }) => {
       const clean = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v === '' ? null : v]))
-      const q = id ? supabase.from('care_tasks').update(clean).eq('id', id) : supabase.from('care_tasks').insert({ ...clean, household_id: hid })
+      const q = id ? untypedDb.from('care_tasks').update(clean).eq('id', id) : untypedDb.from('care_tasks').insert({ ...clean, household_id: hid })
       const { error } = await q
       if (error) throw error
     },
@@ -54,7 +54,7 @@ export function useSaveFood(hid: string) {
   return useMutation({
     mutationFn: async ({ id, ...row }: Partial<FoodProfile> & { product: string }) => {
       const clean = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v === '' ? null : v]))
-      const q = id ? supabase.from('food_profiles').update(clean).eq('id', id) : supabase.from('food_profiles').insert({ ...clean, household_id: hid })
+      const q = id ? untypedDb.from('food_profiles').update(clean).eq('id', id) : untypedDb.from('food_profiles').insert({ ...clean, household_id: hid })
       const { error } = await q
       if (error) throw error
     },

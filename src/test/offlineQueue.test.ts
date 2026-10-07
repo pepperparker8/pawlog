@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const store = new Map<string, unknown>()
 vi.mock('idb-keyval', () => ({ get: async (k: string) => store.get(k), set: async (k: string, v: unknown) => { store.set(k, v) } }))
 const insert = vi.fn()
-vi.mock('../lib/supabase', () => ({ supabase: { from: () => ({ insert }) } }))
+vi.mock('../lib/supabase', () => ({ untypedDb: { from: () => ({ insert }) } }))
 
 import { enqueue, flushQueue, readQueue } from '../lib/offlineQueue'
 

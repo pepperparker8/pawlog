@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
 const url = import.meta.env.VITE_SUPABASE_URL
@@ -10,5 +10,8 @@ export const supabase = createClient<Database>(url ?? 'http://localhost:54321', 
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
   realtime: { params: { eventsPerSecond: 5 } },
 })
+
+/** Same client without per-table typing, for writes whose row shape is built at runtime from forms. RLS still applies. */
+export const untypedDb = supabase as unknown as SupabaseClient
 
 export const PHOTO_BUCKET = 'cat-photos'

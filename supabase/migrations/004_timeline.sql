@@ -141,7 +141,7 @@ language sql stable security invoker as $$
   -- weight: compare last reading to the median of the 30 days before it
   weight_trend as (
     select c.id, c.name, w.weight_kg as last_kg, w.logged_at,
-           (select percentile_cont(0.5) within group (order by weight_kg)
+           (select (percentile_cont(0.5) within group (order by weight_kg))::numeric
             from weight_logs p where p.cat_id = c.id and p.logged_at < w.logged_at and p.logged_at >= w.logged_at - interval '30 days') as base_kg
     from active_cats c
     join lateral (select weight_kg, logged_at from weight_logs where cat_id = c.id order by logged_at desc limit 1) w on true
@@ -234,7 +234,7 @@ grant execute on function on_this_day(uuid) to authenticated;
 create or replace function search_household(p_household uuid, p_query text)
 returns table (kind text, id uuid, cat_id uuid, title text, snippet text, occurred_at timestamptz)
 language sql stable security invoker as $$
-  select 'cat', id, id, name, coalesce(breed, '') || ' ' || coalesce(color, ''), created_at
+  select 'cat' as kind, id, id as cat_id, name as title, coalesce(breed, '') || ' ' || coalesce(color, '') as snippet, created_at as occurred_at
   from cats where household_id = p_household and (name ilike '%' || p_query || '%' or breed ilike '%' || p_query || '%')
   union all
   select kind, id, cat_id, title, left(coalesce(detail, ''), 120), occurred_at

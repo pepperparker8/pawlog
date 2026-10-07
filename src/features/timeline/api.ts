@@ -31,7 +31,7 @@ export function useHouseholdToday(hid: string) {
     queryFn: async () => {
       const { data, error } = await supabase.rpc('household_today', { p_household: hid })
       if (error) throw error
-      return data as HouseholdToday
+      return data as unknown as HouseholdToday
     },
   })
 }

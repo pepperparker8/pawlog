@@ -1,6 +1,6 @@
 // Offline queue for Quick Log. Every entry carries client_event_id so a retry never double-logs.
 import { get, set } from 'idb-keyval'
-import { supabase } from './supabase'
+import { untypedDb } from './supabase'
 
 export interface QueuedInsert {
   id: string                 // client_event_id
@@ -40,7 +40,7 @@ export async function flushQueue(): Promise<{ sent: number; failed: number }> {
     const q = await readQueue()
     const remaining: QueuedInsert[] = []
     for (const item of q) {
-      const { error } = await supabase.from(item.table).insert(item.row)
+      const { error } = await untypedDb.from(item.table).insert(item.row)
       if (!error || error.code === '23505') sent++       // duplicate = already synced
       else if (error.message.includes('fetch')) remaining.push(item)   // still offline
       else { failed++; console.warn('queue item rejected', item, error) }

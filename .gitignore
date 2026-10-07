@@ -23,3 +23,6 @@ build/
 .vscode/
 .idea/
 *.log
+
+# local tooling
+.claude/

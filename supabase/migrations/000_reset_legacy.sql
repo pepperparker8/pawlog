@@ -1,10 +1,9 @@
 -- 000 Remove the single-owner schema applied before the household model existed.
 -- Run once on projects created before migration 001. No-op on a fresh project.
+-- The empty legacy bucket "photos" is left in place; remove it in the Storage dashboard if wanted.
 
 drop trigger if exists on_auth_user_created on auth.users;
 drop policy if exists "owner photos" on storage.objects;
-delete from storage.objects where bucket_id = 'photos';
-delete from storage.buckets where id = 'photos';
 
 drop view if exists owner_stats, growth_velocity, cat_stats cascade;
 drop table if exists

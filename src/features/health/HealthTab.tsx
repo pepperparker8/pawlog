@@ -1,14 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Check, Plus, Trash2 } from 'lucide-react'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Sheet, Spinner, Textarea } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
-import { dateLabel, dueLabel, todayInput } from '../../lib/format'
-import { useCatHealth, useDeleteHealthRow, useSaveHealthRow } from './api'
+import { courseDay, dateLabel, dueLabel, todayInput } from '../../lib/format'
+import { useCatHealth, useDeleteHealthRow, useGiveDose, useMedsToday, useSaveHealthRow, type MedToday } from './api'
+
+export const PARASITE_KINDS: Array<[string, string]> = [['flea_tick', 'Flea and tick'], ['deworming', 'Deworming'], ['heartworm', 'Heartworm'], ['other', 'Other']]
+export const parasiteLabel = (k: string) => PARASITE_KINDS.find(([v]) => v === k)?.[1] ?? k
 
 type Table = 'cat_medications' | 'cat_conditions' | 'vet_visits' | 'vaccination_records' | 'parasite_treatments'
-type FieldDef = { key: string; label: string; type?: 'text' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox'; options?: string[]; required?: boolean; default?: string }
+type FieldDef = { key: string; label: string; type?: 'text' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox'; options?: Array<[string, string]>; required?: boolean; default?: string }
 const FORMS: Record<Table, { title: string; fields: FieldDef[] }> = {
   cat_medications: { title: 'Medication', fields: [
     { key: 'name', label: 'Name', required: true }, { key: 'dose', label: 'Dose' }, { key: 'frequency', label: 'Frequency' },
@@ -16,7 +19,7 @@ const FORMS: Record<Table, { title: string; fields: FieldDef[] }> = {
     { key: 'end_on', label: 'End', type: 'date' }, { key: 'reason', label: 'Reason', type: 'textarea' }, { key: 'active', label: 'Active', type: 'checkbox', default: 'true' } ] },
   cat_conditions: { title: 'Condition', fields: [
     { key: 'name', label: 'Condition', required: true }, { key: 'noted_on', label: 'Noted on', type: 'date', default: 'today' },
-    { key: 'status', label: 'Status', type: 'select', options: ['active', 'monitoring', 'resolved'], default: 'active' }, { key: 'notes', label: 'Notes', type: 'textarea' } ] },
+    { key: 'status', label: 'Status', type: 'select', options: [['active', 'Active'], ['monitoring', 'Monitoring'], ['resolved', 'Resolved']], default: 'active' }, { key: 'notes', label: 'Notes', type: 'textarea' } ] },
   vet_visits: { title: 'Vet visit', fields: [
     { key: 'visited_on', label: 'Date', type: 'date', required: true, default: 'today' }, { key: 'clinic', label: 'Clinic' }, { key: 'vet_name', label: 'Vet' },
     { key: 'reason', label: 'Reason' }, { key: 'findings', label: 'Findings', type: 'textarea' }, { key: 'cost', label: 'Cost', type: 'number' },
@@ -25,28 +28,34 @@ const FORMS: Record<Table, { title: string; fields: FieldDef[] }> = {
     { key: 'vaccine_name', label: 'Vaccine', required: true }, { key: 'given_on', label: 'Given on', type: 'date', required: true, default: 'today' },
     { key: 'next_due_on', label: 'Next due', type: 'date' }, { key: 'clinic', label: 'Clinic' }, { key: 'batch_no', label: 'Batch no.' }, { key: 'note', label: 'Note', type: 'textarea' } ] },
   parasite_treatments: { title: 'Parasite treatment', fields: [
-    { key: 'kind', label: 'Kind', type: 'select', options: ['flea', 'tick', 'deworming', 'heartworm', 'ear_mites', 'other'], default: 'flea' },
+    { key: 'kind', label: 'Kind', type: 'select', options: PARASITE_KINDS, default: 'flea_tick' },
     { key: 'product', label: 'Product' }, { key: 'given_on', label: 'Given on', type: 'date', required: true, default: 'today' }, { key: 'next_due_on', label: 'Next due', type: 'date' }, { key: 'note', label: 'Note', type: 'textarea' } ] },
 }
 
 export function HealthTab({ catId }: { catId: string }) {
   const { current, canEdit } = useHousehold()
   const h = useCatHealth(catId)
+  const meds = useMedsToday(current!.id)
   const [editing, setEditing] = useState<{ table: Table; row?: Record<string, unknown> } | null>(null)
   if (h.isLoading || !h.data) return <Spinner />
   const d = h.data
-  const add = (table: Table) => canEdit && <button onClick={() => setEditing({ table })} className="rounded-full bg-paw-100 p-1.5 text-paw-700" aria-label="Add"><Plus className="h-4 w-4" /></button>
+  const add = (table: Table) => canEdit && <button onClick={() => setEditing({ table })} className="flex items-center gap-1 rounded-full bg-paw-100 px-3 py-1.5 text-xs font-semibold text-paw-700"><Plus className="h-3.5 w-3.5" />Add</button>
   const due = (iso: string | null) => { const x = dueLabel(iso); return <Chip tone={x.tone === 'overdue' ? 'bad' : x.tone === 'soon' ? 'warn' : 'neutral'}>{x.text}</Chip> }
   return (
     <div className="space-y-5">
-      <p className="text-[11px] text-stone-400">Your own records for vet conversations. PawLog never diagnoses.</p>
+      <p className="text-xs text-stone-500">Records for your vet conversations. PawLog does not diagnose.</p>
       <section>
         <SectionTitle action={add('cat_medications')}>Medications</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">
-          {d.medications.length ? d.medications.map(m => (
-            <RowItem key={m.id} onClick={() => canEdit && setEditing({ table: 'cat_medications', row: m as unknown as Record<string, unknown> })}
-              title={m.name} sub={[m.dose, m.frequency, m.start_on && `from ${dateLabel(m.start_on)}`, m.reason].filter(Boolean).join(' · ')} right={<Chip tone={m.active ? 'brand' : 'neutral'}>{m.active ? 'active' : 'ended'}</Chip>} />
-          )) : <Empty text="No medications" />}
+          {d.medications.length ? d.medications.map(m => {
+            const live = meds.data?.find(x => x.id === m.id)
+            const cd = live ? courseDay(m.start_on, m.end_on) : null
+            return (
+              <RowItem key={m.id} onClick={() => canEdit && setEditing({ table: 'cat_medications', row: m as unknown as Record<string, unknown> })}
+                title={m.name} sub={[m.dose, m.frequency, cd ? (cd.of ? `Day ${cd.day} of ${cd.of}` : `Day ${cd.day}`) : m.start_on && `from ${dateLabel(m.start_on)}`].filter(Boolean).join(' · ')}
+                right={live && canEdit ? <GiveDose med={live} hid={current!.id} /> : <Chip tone={m.active ? 'brand' : 'neutral'}>{m.active ? 'active' : 'ended'}</Chip>} />
+            )
+          }) : <Empty text="No medications" />}
         </Card>
       </section>
       <section>
@@ -69,7 +78,7 @@ export function HealthTab({ catId }: { catId: string }) {
         <SectionTitle action={add('parasite_treatments')}>Parasite prevention</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">
           {d.parasites.length ? d.parasites.map(p => (
-            <RowItem key={p.id} onClick={() => canEdit && setEditing({ table: 'parasite_treatments', row: p as unknown as Record<string, unknown> })} title={`${p.kind}${p.product ? ` · ${p.product}` : ''}`} sub={dateLabel(p.given_on)} right={due(p.next_due_on)} />
+            <RowItem key={p.id} onClick={() => canEdit && setEditing({ table: 'parasite_treatments', row: p as unknown as Record<string, unknown> })} title={`${parasiteLabel(p.kind)}${p.product ? ` · ${p.product}` : ''}`} sub={dateLabel(p.given_on)} right={due(p.next_due_on)} />
           )) : <Empty text="No treatments recorded" />}
         </Card>
       </section>
@@ -86,9 +95,22 @@ export function HealthTab({ catId }: { catId: string }) {
   )
 }
 
+function GiveDose({ med, hid }: { med: MedToday; hid: string }) {
+  const give = useGiveDose(hid)
+  const toast = useToast()
+  const target = med.times_per_day ?? 1
+  const done = med.given_today >= target
+  return (
+    <button disabled={give.isPending} onClick={e => { e.stopPropagation(); give.mutateAsync(med).then(() => toast.show(`💊 ${med.name} dose recorded`, 'xp')).catch(err => toast.show(friendlyError(err), 'bad')) }}
+      className={done ? 'flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700' : 'rounded-full bg-paw-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm active:scale-95'}>
+      {done ? <><Check className="h-3.5 w-3.5" />{med.given_today}/{target} today</> : `Give dose${target > 1 ? ` ${med.given_today + 1}/${target}` : ''}`}
+    </button>
+  )
+}
+
 function RowItem({ title, sub, right, onClick }: { title: string; sub?: string; right?: React.ReactNode; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className="flex items-center gap-3 px-4 py-2.5 active:bg-stone-50">
+    <div onClick={onClick} className="flex min-h-14 items-center gap-3 px-4 py-2.5 active:bg-stone-50">
       <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{title}</div>{sub && <div className="truncate text-xs text-stone-500">{sub}</div>}</div>{right}
     </div>
   )
@@ -121,23 +143,23 @@ function HealthSheet({ table, row, catId, hid, onClose }: { table: Table; row?: 
     try { await del.mutateAsync(row!.id as string); toast.show('Deleted'); onClose() } catch (err) { setError(friendlyError(err)) }
   }
   return (
-    <Sheet open onClose={onClose} title={`${row ? 'Edit' : 'Add'} ${def.title.toLowerCase()}`}>
-      <form onSubmit={submit} className="grid grid-cols-2 gap-3">
+    <Sheet open onClose={onClose} title={`${row ? 'Edit' : 'Add'} ${def.title.toLowerCase()}`} footer={
+      <div className="flex gap-2">
+        {row && <Button type="button" variant="danger" onClick={remove} loading={del.isPending} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>}
+        <Button type="submit" form="health-form" className="flex-1 py-3 text-base" loading={save.isPending}>Save</Button>
+      </div>}>
+      <form id="health-form" onSubmit={submit} className="grid grid-cols-2 gap-3 pb-1">
         {def.fields.map(x => {
           const wide = x.type === 'textarea' || x.required
           const common = { value: f[x.key] ?? '', onChange: (e: { target: { value: string } }) => setF(s => ({ ...s, [x.key]: e.target.value })) }
           if (x.type === 'checkbox') return <label key={x.key} className="col-span-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={f[x.key] === 'true'} onChange={e => setF(s => ({ ...s, [x.key]: String(e.target.checked) }))} />{x.label}</label>
           return (
             <Field key={x.key} label={x.label} className={wide ? 'col-span-2' : ''}>
-              {x.type === 'textarea' ? <Textarea {...common} /> : x.type === 'select' ? <Select {...common}>{x.options!.map(o => <option key={o}>{o}</option>)}</Select>
+              {x.type === 'textarea' ? <Textarea {...common} /> : x.type === 'select' ? <Select {...common}>{x.options!.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
                 : <Input type={x.type ?? 'text'} step={x.type === 'number' ? 'any' : undefined} {...common} />}
             </Field>)
         })}
-        <ErrorNote message={error} />
-        <div className="col-span-2 flex gap-2">
-          {row && <Button type="button" variant="danger" onClick={remove} loading={del.isPending}><Trash2 className="h-4 w-4" /></Button>}
-          <Button type="submit" className="flex-1" loading={save.isPending}>Save</Button>
-        </div>
+        <div className="col-span-2"><ErrorNote message={error} /></div>
       </form>
     </Sheet>
   )

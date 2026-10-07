@@ -73,7 +73,7 @@ export function useSignedUrl(path: string | null | undefined) {
     queryFn: () => {
       if (!signed.has(path!)) {
         signed.set(path!, supabase.storage.from(PHOTO_BUCKET).createSignedUrl(path!, 3600).then(r => {
-          if (r.error) throw r.error
+          if (r.error) { signed.delete(path!); throw r.error }
           return r.data.signedUrl
         }))
       }

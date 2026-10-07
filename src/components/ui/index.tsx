@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { Loader2, X } from 'lucide-react'
 
@@ -78,17 +79,27 @@ export function EmptyState({ emoji = '🐾', title, body, action }: { emoji?: st
   )
 }
 
-export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
+export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
+  }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="animate-pop relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-4 pb-8 shadow-xl sm:max-w-lg sm:rounded-3xl">
-        <div className="mb-3 flex items-center justify-between">
+      <div className="animate-sheet relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-white shadow-xl sm:max-w-lg sm:rounded-3xl">
+        <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-stone-200 sm:hidden" />
+        <div className="flex items-center justify-between px-4 pb-1 pt-2">
           <h2 className="text-lg font-bold">{title}</h2>
-          <button onClick={onClose} className="rounded-full p-2 hover:bg-stone-100" aria-label="Close"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="-mr-2 rounded-full p-2.5 hover:bg-stone-100" aria-label="Close"><X className="h-5 w-5" /></button>
         </div>
-        {children}
+        <div className={cx('overflow-y-auto overscroll-contain px-4', footer ? 'pb-3' : 'safe-bottom-pad pb-6')}>{children}</div>
+        {footer && <div className="safe-bottom-pad border-t border-stone-100 bg-white px-4 pt-3 sm:rounded-b-3xl">{footer}</div>}
       </div>
     </div>
   )

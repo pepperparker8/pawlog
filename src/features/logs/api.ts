@@ -15,7 +15,7 @@ export interface LogRequest {
   fields: Record<string, unknown>
 }
 
-export interface LogResult { table: LogTable; inserted: number; queued: number }
+export interface LogResult { table: LogTable; inserted: number; queued: number; ids: string[] }
 
 /**
  * Inserts one row per cat. Offline (or network failure) → queued in IndexedDB with the
@@ -31,7 +31,7 @@ export async function submitLog(req: LogRequest): Promise<LogResult> {
   }))
   if (!navigator.onLine) {
     for (const row of rows) await enqueue({ id: row.client_event_id, table: req.table, row, queuedAt: new Date().toISOString() })
-    return { table: req.table, inserted: 0, queued: rows.length }
+    return { table: req.table, inserted: 0, queued: rows.length, ids: rows.map(r => r.client_event_id) }
   }
   const { error } = await supabase.from(req.table).insert(rows)
   if (error) {
@@ -40,7 +40,7 @@ export async function submitLog(req: LogRequest): Promise<LogResult> {
       queued = rows.length
     } else throw error
   } else inserted = rows.length
-  return { table: req.table, inserted, queued }
+  return { table: req.table, inserted, queued, ids: rows.map(r => r.client_event_id) }
 }
 
 export function useSubmitLog() {
@@ -60,4 +60,15 @@ export const KIND_TO_TABLE: Record<string, string> = {
   medication: 'medication_logs', grooming: 'grooming_logs', behavior: 'behavior_logs', activity: 'activity_logs',
   journal: 'journal_entries', photo: 'photos', vet_visit: 'vet_visits', vaccination: 'vaccination_records',
   parasite: 'parasite_treatments', care_task: 'care_task_completions',
+}
+
+export interface Award { xp: number; repeat: boolean }
+
+/** XP is decided by the database (windows and daily caps), so read back what was actually granted. */
+export async function fetchAward(ids: string[]): Promise<Award> {
+  if (!ids.length) return { xp: 0, repeat: false }
+  const { data, error } = await supabase.from('xp_transactions').select('xp, reason').in('client_event_id', ids)
+  if (error || !data) return { xp: 0, repeat: false }
+  const xp = data.reduce((a, r) => a + r.xp, 0)
+  return { xp, repeat: xp === 0 && data.some(r => r.reason === 'window' || r.reason === 'capped') }
 }

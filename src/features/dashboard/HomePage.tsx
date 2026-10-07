@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { AlertTriangle, Eye, Info, Sparkles } from 'lucide-react'
 import { useHousehold } from '../../household/HouseholdProvider'
-import { Avatar, Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Spinner } from '../../components/ui'
+import { Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
 import { useHouseholdToday, useOnThisDay, usePatterns, KIND_META } from '../timeline/api'
 import { useQuests } from '../gamification/api'
 import { LevelCard } from '../gamification/LevelCard'
-import { ago, catAge, dateLabel, kg } from '../../lib/format'
+import { catAge, dateLabel, dueLabel, isTodayIso, kg } from '../../lib/format'
 import { useSeedDemo } from '../household/api'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
@@ -57,6 +57,13 @@ export function HomePage() {
         )}
       </header>
 
+      <section>
+        <SectionTitle action={<Link to="/cats" className="text-xs text-paw-600">All cats</Link>}>Your cats</SectionTitle>
+        <Card className="divide-y divide-stone-100 p-0">
+          {[...cats.data].sort((a, b) => attention(b) - attention(a)).map(c => <CatRow key={c.cat_id} cat={c} />)}
+        </Card>
+      </section>
+
       <LevelCard compact />
 
       {(act.length > 0 || info.length > 0) && (
@@ -103,13 +110,6 @@ export function HomePage() {
         </section>
       )}
 
-      <section>
-        <SectionTitle action={<Link to="/cats" className="text-xs text-paw-600">All cats</Link>}>Your cats</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          {cats.data.map(c => <CatTile key={c.cat_id} cat={c} />)}
-        </div>
-      </section>
-
       {otd.data && otd.data.length > 0 && (
         <section>
           <SectionTitle>On this day</SectionTitle>
@@ -130,24 +130,55 @@ export function HomePage() {
   )
 }
 
+function attention(c: CatSummary) {
+  const overdue = [c.next_task_due, c.next_vaccine_due, c.next_parasite_due].some(d => dueLabel(d).tone === 'overdue')
+  return (overdue ? 2 : 0) + (c.symptoms_7d > 0 ? 1 : 0)
+}
+
+function CatRow({ cat }: { cat: CatSummary }) {
+  const url = useSignedUrl(cat.profile_thumbnail_path)
+  const fed = isTodayIso(cat.last_fed_at)
+  const a = attention(cat)
+  return (
+    <Link to={`/cats/${cat.cat_id}`} className="flex min-h-16 items-center gap-3 px-3 py-2.5 active:bg-paw-50">
+      <span className="relative shrink-0">
+        {url.data ? <img src={url.data} alt="" className="h-12 w-12 rounded-full object-cover" loading="lazy" />
+          : <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-paw-100 to-paw-200 text-lg font-black text-paw-500">{cat.name.slice(0, 1).toUpperCase()}</span>}
+        <span className={cx('absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-white', a >= 2 ? 'bg-red-500' : a === 1 ? 'bg-amber-400' : 'bg-emerald-500')} aria-label={a >= 2 ? 'Due' : a === 1 ? 'Follow-up' : 'On track'} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold">{cat.name}</span>
+        <span className="block truncate text-xs text-stone-500">{[catAge(cat.date_of_birth, cat.dob_is_estimate), cat.last_weight_kg != null && kg(cat.last_weight_kg)].filter(Boolean).join(' · ')}</span>
+      </span>
+      <span className="flex shrink-0 gap-1 text-xs">
+        {a >= 2 && <Chip tone="bad">Due</Chip>}
+        {a === 1 && <Chip tone="warn">Watch</Chip>}
+        {cat.active_medications > 0 && <Chip tone="brand">💊 {cat.active_medications}</Chip>}
+        <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? '🍽️ Fed' : '🍽️ —'}</Chip>
+      </span>
+    </Link>
+  )
+}
+
 export function CatTile({ cat }: { cat: CatSummary }) {
   const url = useSignedUrl(cat.profile_thumbnail_path)
-  const warn = cat.symptoms_7d > 0 || (cat.next_task_due && cat.next_task_due <= new Date().toISOString().slice(0, 10))
-  const fedToday = cat.last_fed_at && cat.last_fed_at.slice(0, 10) === new Date().toISOString().slice(0, 10)
+  const fed = isTodayIso(cat.last_fed_at)
+  const overdue = [cat.next_task_due, cat.next_vaccine_due, cat.next_parasite_due].some(d => dueLabel(d).tone === 'overdue')
   return (
-    <Link to={`/cats/${cat.cat_id}`}>
-      <Card className="flex h-full flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Avatar name={cat.name} src={url.data} size={44} />
-          <div className="min-w-0">
-            <div className="truncate font-bold">{cat.name}</div>
-            <div className="text-xs text-stone-500">{catAge(cat.date_of_birth, cat.dob_is_estimate)} · Lv {cat.level}</div>
-          </div>
+    <Link to={`/cats/${cat.cat_id}`} className="block active:scale-[.98]">
+      <Card className="h-full overflow-hidden p-0">
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-paw-100 to-paw-200">
+          {url.data ? <img src={url.data} alt={cat.name} className="h-full w-full object-cover" loading="lazy" />
+            : <span className="flex h-full items-center justify-center text-4xl font-black text-paw-400">{cat.name.slice(0, 1).toUpperCase()}</span>}
+          {(overdue || cat.symptoms_7d > 0) && <span className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-red-600 shadow-sm">{overdue ? 'Due' : 'Watch'}</span>}
         </div>
-        <div className="flex flex-wrap gap-1">
-          <Chip tone={fedToday ? 'ok' : 'warn'}>{fedToday ? 'Fed today' : `Fed ${ago(cat.last_fed_at)}`}</Chip>
-          <Chip>{kg(cat.last_weight_kg)}</Chip>
-          {warn && <Chip tone="bad">Check</Chip>}
+        <div className="p-3">
+          <div className="truncate font-bold">{cat.name}</div>
+          <div className="truncate text-xs text-stone-500">{[catAge(cat.date_of_birth, cat.dob_is_estimate), cat.last_weight_kg != null && kg(cat.last_weight_kg)].filter(Boolean).join(' · ')}</div>
+          <div className="mt-2 flex gap-1 text-xs">
+            <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? '🍽️ Fed' : '🍽️ Not yet'}</Chip>
+            {cat.active_medications > 0 && <Chip tone="brand">💊 {cat.active_medications}</Chip>}
+          </div>
         </div>
       </Card>
     </Link>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useMatch } from 'react-router-dom'
 import { Cat, Clock, Home, MoreHorizontal, Plus } from 'lucide-react'
 import { QuickLogSheet } from '../../features/logs/QuickLogSheet'
 import { cx } from '../ui'
@@ -16,6 +16,7 @@ export function AppShell() {
   const [logOpen, setLogOpen] = useState(false)
   const online = useOnlineStatus()
   const { pathname } = useLocation()
+  const catMatch = useMatch('/cats/:id/*')
   const hideNav = pathname.startsWith('/log')
   return (
     <div className="mx-auto flex min-h-full max-w-2xl flex-col">
@@ -35,7 +36,7 @@ export function AppShell() {
           </div>
         </nav>
       )}
-      <QuickLogSheet open={logOpen} onClose={() => setLogOpen(false)} />
+      <QuickLogSheet open={logOpen} onClose={() => setLogOpen(false)} presetCat={catMatch?.params.id === 'new' ? undefined : catMatch?.params.id} />
     </div>
   )
 }

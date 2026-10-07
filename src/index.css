@@ -3,6 +3,9 @@
 @theme {
   --color-paw-50: #fff7ed;
   --color-paw-100: #ffedd5;
+  --color-paw-200: #fed7aa;
+  --color-paw-300: #fdba74;
+  --color-paw-400: #fb923c;
   --color-paw-500: #f97316;
   --color-paw-600: #ea580c;
   --color-paw-700: #c2410c;
@@ -11,7 +14,14 @@
 html, body, #root { height: 100%; }
 body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-bottom-pad { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+.safe-top { top: max(.75rem, env(safe-area-inset-top)); }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { scrollbar-width: none; }
 @keyframes pop { 0% { transform: translateY(8px) scale(.96); opacity: 0 } 100% { transform: none; opacity: 1 } }
 .animate-pop { animation: pop .18s ease-out; }
+@keyframes sheet { 0% { transform: translateY(24px); opacity: 0 } 100% { transform: none; opacity: 1 } }
+.animate-sheet { animation: sheet .2s ease-out; }
+@keyframes celebrate { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
+.animate-celebrate { animation: celebrate .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .animate-pop, .animate-sheet, .animate-celebrate { animation: none; } }

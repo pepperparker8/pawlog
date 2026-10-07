@@ -1,6 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { supabase, untypedDb } from '../../lib/supabase'
-import { keys, queryClient } from '../../lib/queryClient'
+import { invalidateHousehold, keys, queryClient } from '../../lib/queryClient'
+import { startOfDay } from 'date-fns'
+import { todayInput } from '../../lib/format'
+import { submitLog } from '../logs/api'
 import type { CatCondition, CatMedication, Milestone, ParasiteTreatment, VaccinationRecord, VetVisit, WeightLog, WeightWeekly } from '../../lib/types'
 
 export function useCatHealth(catId: string) {
@@ -86,5 +89,40 @@ export function useDeleteHealthRow(table: Table, hid: string, catId: string) {
       void queryClient.invalidateQueries({ queryKey: keys.health(catId) })
       void queryClient.invalidateQueries({ queryKey: keys.catSummaries(hid) })
     },
+  })
+}
+
+export interface MedToday extends CatMedication { given_today: number }
+
+/** Active medication courses running today, with the number of doses already logged today. */
+export function useMedsToday(hid: string) {
+  return useQuery({
+    queryKey: ['meds-today', hid],
+    queryFn: async () => {
+      const today = todayInput()
+      const [meds, logs] = await Promise.all([
+        supabase.from('cat_medications').select('*').eq('household_id', hid).eq('active', true),
+        supabase.from('medication_logs').select('cat_medication_id').eq('household_id', hid).eq('skipped', false)
+          .not('cat_medication_id', 'is', null).gte('logged_at', startOfDay(new Date()).toISOString()),
+      ])
+      if (meds.error) throw meds.error
+      if (logs.error) throw logs.error
+      const given = new Map<string, number>()
+      for (const l of logs.data) given.set(l.cat_medication_id!, (given.get(l.cat_medication_id!) ?? 0) + 1)
+      return (meds.data as CatMedication[])
+        .filter(m => (!m.start_on || m.start_on <= today) && (!m.end_on || m.end_on >= today))
+        .map(m => ({ ...m, given_today: given.get(m.id) ?? 0 }))
+    },
+  })
+}
+
+/** Logs one dose against a medication course so schedule checks can count it. */
+export function useGiveDose(hid: string) {
+  return useMutation({
+    mutationFn: (m: CatMedication) => submitLog({
+      table: 'medication_logs', householdId: hid, catIds: [m.cat_id],
+      fields: { logged_at: new Date().toISOString(), cat_medication_id: m.id, medication_name: m.name, dose: m.dose, skipped: false },
+    }),
+    onSuccess: () => invalidateHousehold(hid),
   })
 }

@@ -60,3 +60,16 @@ export function todayInput(): string {
 export function initials(name: string): string {
   return name.split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase()
 }
+
+/** True when an ISO timestamp falls on the device's local today. */
+export function isTodayIso(iso: string | null | undefined): boolean {
+  return !!iso && isToday(parseISO(iso))
+}
+
+/** Position inside a dated course, e.g. day 2 of 5. Null when the course has no start date. */
+export function courseDay(start: string | null, end: string | null): { day: number; of: number | null } | null {
+  if (!start) return null
+  const day = differenceInDays(new Date(), parseISO(start)) + 1
+  const of = end ? differenceInDays(parseISO(end), parseISO(start)) + 1 : null
+  return { day, of }
+}

@@ -36,6 +36,8 @@ export const keys = {
   search: (hid: string, q: string) => ['search', hid, q] as const,
 }
 
+/** Cat-scoped caches are keyed by cat id, so they are refreshed alongside the household. */
+const CAT_SCOPED = new Set(['cat', 'health', 'weights', 'weight-weekly', 'milestones'])
 export function invalidateHousehold(hid: string) {
-  void queryClient.invalidateQueries({ predicate: q => JSON.stringify(q.queryKey).includes(hid) })
+  void queryClient.invalidateQueries({ predicate: q => CAT_SCOPED.has(String(q.queryKey[0])) || JSON.stringify(q.queryKey).includes(hid) })
 }

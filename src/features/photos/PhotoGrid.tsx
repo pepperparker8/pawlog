@@ -1,44 +1,32 @@
-import { useRef, useState } from 'react'
-import { Camera, Heart, Star, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
+import { Camera, Heart, Loader2, Star, Trash2, X } from 'lucide-react'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, EmptyState, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
 import { dateLabel } from '../../lib/format'
 import { useSignedUrl } from '../cats/api'
-import { useDeletePhoto, usePhotos, useSetProfilePhoto, useUploadPhoto } from './api'
+import { useDeletePhoto, usePhotos, useSetProfilePhoto } from './api'
+import { PhotoPicker } from './PhotoPicker'
 import type { Photo } from '../../lib/types'
 
 export function PhotoGrid({ catId }: { catId?: string }) {
   const { current, canEdit } = useHousehold()
   const hid = current!.id
   const q = usePhotos(hid, catId)
-  const upload = useUploadPhoto()
-  const toast = useToast()
-  const file = useRef<HTMLInputElement>(null)
   const [open, setOpen] = useState<Photo | null>(null)
   const photos = q.data?.pages.flat() ?? []
-
-  async function onPick(files: FileList | null) {
-    if (!files?.length || !catId) return
-    let n = 0
-    for (const f of Array.from(files)) {
-      try { await upload.mutateAsync({ hid, catId, file: f, takenAt: new Date(f.lastModified).toISOString() }); n++ } catch (e) { toast.show(friendlyError(e), 'bad') }
-    }
-    if (n) toast.show(`+${5 * n} XP · ${n} photo${n > 1 ? 's' : ''} added`, 'xp')
-    if (file.current) file.current.value = ''
-  }
 
   return (
     <div>
       {canEdit && catId && (
-        <div className="mb-3">
-          <input ref={file} type="file" accept="image/*" multiple className="hidden" onChange={e => void onPick(e.target.files)} />
-          <Button variant="secondary" className="w-full" loading={upload.isPending} onClick={() => file.current?.click()}><Camera className="h-4 w-4" />Add photos</Button>
-        </div>
+        <PhotoPicker hid={hid} catId={catId} multiple label="Add photos"
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-paw-300 bg-paw-50 px-4 py-3 text-sm font-semibold text-paw-700 active:scale-[.99] disabled:opacity-60">
+          {busy => <>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}{busy ? 'Uploading…' : 'Add photos'}</>}
+        </PhotoPicker>
       )}
       {q.isLoading ? <Spinner /> : photos.length === 0 ? (
-        <EmptyState emoji="📷" title="No photos yet" body="Every photo becomes part of the timeline and the yearly memory." />
+        <EmptyState emoji="📷" title="No photos yet" body="Photos land on the timeline and come back as On this day memories." />
       ) : (
         <>
           <div className="grid grid-cols-3 gap-1">{photos.map(p => <Thumb key={p.id} p={p} onClick={() => setOpen(p)} />)}</div>
@@ -66,20 +54,20 @@ function Lightbox({ p, onClose, canEdit, hid }: { p: Photo; onClose: () => void;
   const prof = useSetProfilePhoto(hid)
   const toast = useToast()
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="flex items-center justify-between p-3">
         <span className="text-sm">{dateLabel(p.taken_at)}</span>
         <button onClick={onClose} aria-label="Close" className="rounded-full p-2 hover:bg-white/10"><X className="h-5 w-5" /></button>
       </div>
       <div className="flex flex-1 items-center justify-center">{u.data ? <img src={u.data} alt={p.caption ?? ''} className="max-h-full max-w-full object-contain" /> : <Spinner />}</div>
-      <div className="flex items-center justify-between p-3">
-        <span className="text-sm text-white/80">{p.caption}</span>
+      <div className="safe-bottom-pad flex items-center justify-between gap-3 p-3">
+        <span className="min-w-0 truncate text-sm text-white/80">{p.caption}</span>
         {canEdit && (
           <div className="flex gap-2">
-            <button onClick={() => prof.mutateAsync({ catId: p.cat_id, photoId: p.id }).then(() => toast.show('Profile photo set')).catch(e => toast.show(friendlyError(e), 'bad'))}
-              className={cx('rounded-full p-2 hover:bg-white/10')} aria-label="Set as profile"><Star className="h-5 w-5" /></button>
+            <button onClick={() => prof.mutateAsync({ catId: p.cat_id, photoId: p.id }).then(() => { toast.show('📸 Profile photo updated'); onClose() }).catch(e => toast.show(friendlyError(e), 'bad'))}
+              className={cx('flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-sm')}><Star className="h-4 w-4" />Profile photo</button>
             <button onClick={() => { if (confirm('Delete this photo?')) del.mutateAsync(p).then(onClose).catch(e => toast.show(friendlyError(e), 'bad')) }}
-              className="rounded-full p-2 hover:bg-white/10" aria-label="Delete"><Trash2 className="h-5 w-5" /></button>
+              className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-sm"><Trash2 className="h-4 w-4" />Delete</button>
           </div>
         )}
       </div>

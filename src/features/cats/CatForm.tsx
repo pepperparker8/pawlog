@@ -6,6 +6,9 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
 import { useArchiveCat, useCat, useSaveCat, type CatInput } from './api'
+import { uploadPhoto } from '../photos/api'
+import { invalidateHousehold } from '../../lib/queryClient'
+import { Camera } from 'lucide-react'
 import type { Cat } from '../../lib/types'
 
 const EMPTY: CatInput = { name: '', nickname: '', breed: '', color: '', sex: 'unknown', date_of_birth: '', dob_is_estimate: false, adopted_on: '',
@@ -21,6 +24,14 @@ export function CatForm() {
   const toast = useToast()
   const [f, setF] = useState<CatInput>(EMPTY)
   const [error, setError] = useState<string | null>(null)
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  useEffect(() => {
+    if (!photo) { setPreview(null); return }
+    const url = URL.createObjectURL(photo); setPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [photo])
   useEffect(() => { if (existing.data) setF(fromCat(existing.data)) }, [existing.data])
   const set = <K extends keyof CatInput>(k: K, v: CatInput[K]) => setF(s => ({ ...s, [k]: v }))
 
@@ -32,6 +43,12 @@ export function CatForm() {
     if (!f.name.trim()) { setError('A name is required.'); return }
     try {
       const cat = await save.mutateAsync({ ...f, id, name: f.name.trim() })
+      if (photo) {
+        setUploading(true)
+        try { await uploadPhoto({ hid: current!.id, catId: cat.id, file: photo, setAsProfile: true }); invalidateHousehold(current!.id) }
+        catch (err) { toast.show(`Photo not saved: ${friendlyError(err)}`, 'bad') }
+        finally { setUploading(false) }
+      }
       toast.show(id ? 'Saved' : `Welcome, ${cat.name}!`)
       nav(`/cats/${cat.id}`, { replace: true })
     } catch (err) { setError(friendlyError(err)) }
@@ -46,8 +63,17 @@ export function CatForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <PageHeader title={id ? `Edit ${existing.data?.name ?? ''}` : 'New cat'} back />
+      {!id && (
+        <label className="mx-auto flex w-fit cursor-pointer flex-col items-center gap-1.5 text-xs font-medium text-paw-700">
+          {preview
+            ? <img src={preview} alt="" className="h-24 w-24 rounded-full object-cover ring-4 ring-paw-100" />
+            : <span className="grid h-24 w-24 place-items-center rounded-full border-2 border-dashed border-paw-300 bg-paw-50"><Camera className="h-7 w-7 text-paw-500" /></span>}
+          {preview ? 'Change photo' : 'Add photo'}
+          <input type="file" accept="image/*" className="sr-only" onChange={e => setPhoto(e.target.files?.[0] ?? null)} />
+        </label>
+      )}
       <section className="grid grid-cols-2 gap-3">
-        <Field label="Name" className="col-span-2"><Input required value={f.name} onChange={e => set('name', e.target.value)} autoFocus /></Field>
+        <Field label="Name" className="col-span-2"><Input required value={f.name} onChange={e => set('name', e.target.value)} /></Field>
         <Field label="Nickname"><Input value={f.nickname ?? ''} onChange={e => set('nickname', e.target.value)} /></Field>
         <Field label="Sex"><Select value={f.sex} onChange={e => set('sex', e.target.value as Cat['sex'])}><option value="unknown">Unknown</option><option value="female">Female</option><option value="male">Male</option></Select></Field>
         <Field label="Breed"><Input value={f.breed ?? ''} onChange={e => set('breed', e.target.value)} placeholder="Domestic shorthair" /></Field>
@@ -71,7 +97,7 @@ export function CatForm() {
         </div>
       </details>
       <ErrorNote message={error} />
-      <Button type="submit" loading={save.isPending} className="w-full">{id ? 'Save changes' : 'Add cat'}</Button>
+      <Button type="submit" loading={save.isPending || uploading} className="w-full">{id ? 'Save changes' : 'Add cat'}</Button>
       {id && <Button type="button" variant="ghost" className="w-full text-stone-500" loading={archive.isPending} onClick={doArchive}>{existing.data?.archived_at ? 'Restore cat' : 'Archive cat'}</Button>}
     </form>
   )

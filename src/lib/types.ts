@@ -12,7 +12,7 @@ export interface Cat {
   microchip_id: string | null; neutered: boolean | null; blood_type: string | null; allergies: string | null
   known_conditions: string | null; emergency_notes: string | null; vet_name: string | null; clinic_name: string | null
   clinic_phone: string | null; profile_photo_id: string | null; archived_at: string | null; deceased_on: string | null
-  created_at: string
+  breed_code?: string | null; created_at: string
 }
 
 export interface CatSummary {
@@ -34,7 +34,7 @@ export interface TimelineEvent {
   title: string; detail: string | null; data: Record<string, unknown>; created_by: string | null; created_at: string
 }
 
-export interface WeightLog { id: string; cat_id: string; logged_at: string; weight_kg: number; body_condition_score: number | null; note: string | null }
+export interface WeightLog { id: string; cat_id: string; logged_at: string; weight_kg: number; body_condition_score: number | null; body_condition_source: 'vet' | 'owner' | null; note: string | null }
 export interface WeightWeekly { cat_id: string; week_start: string; avg_kg: number; min_kg: number; max_kg: number; samples: number }
 
 export interface Photo {

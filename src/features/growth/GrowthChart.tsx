@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { format, parseISO, subDays } from 'date-fns'
 import { useWeights, useWeightWeekly, useMilestones } from '../health/api'
 import { Card, Chip, EmptyState, Spinner, cx } from '../../components/ui'
 import { kg, dateLabel } from '../../lib/format'
+import { useWeightStatus } from '../weight/api'
+import { WeightStatusCard } from '../weight/WeightStatusCard'
 
 const RANGES = [{ label: '1M', days: 30 }, { label: '3M', days: 90 }, { label: '1Y', days: 365 }, { label: 'All', days: 0 }]
 
@@ -12,6 +14,7 @@ export function GrowthChart({ catId }: { catId: string }) {
   const weekly = useWeightWeekly(catId)
   const ms = useMilestones(catId)
   const [range, setRange] = useState(1)
+  const { result } = useWeightStatus(catId)
   const points = useMemo(() => {
     const all = w.data ?? []
     const days = RANGES[range].days
@@ -31,9 +34,16 @@ export function GrowthChart({ catId }: { catId: string }) {
   const prev = w.data.length > 1 ? w.data[w.data.length - 2] : null
   const delta = prev ? Number(last.weight_kg) - Number(prev.weight_kg) : 0
   const first = w.data[0]
+  const finite = (b: { min: number; max: number } | null | undefined) => b && b.min > 0 && Number.isFinite(b.max) ? b : null
+  const target = finite(result?.targetRange)
+  const ref = result?.lifeStage === 'kitten' ? null : finite(result?.referenceRange)
+  const ys = [...points.map(p => p.kg), ...(target ? [target.min, target.max] : []), ...(ref ? [ref.min, ref.max] : [])]
+  const pad = ys.length ? (Math.max(...ys) - Math.min(...ys)) * 0.1 || 0.2 : 0
+  const domain: [number, number] = ys.length ? [Math.max(0, +(Math.min(...ys) - pad).toFixed(1)), +(Math.max(...ys) + pad).toFixed(1)] : [0, 1]
 
   return (
     <div className="space-y-3">
+      <WeightStatusCard catId={catId} />
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Latest" value={kg(last.weight_kg)} sub={dateLabel(last.logged_at)} />
         <Stat label="Since last" value={`${delta >= 0 ? '+' : ''}${delta.toFixed(2)} kg`} sub={prev ? dateLabel(prev.logged_at) : '—'} tone={Math.abs(delta) > 0.3 ? 'warn' : 'ok'} />
@@ -49,13 +59,19 @@ export function GrowthChart({ catId }: { catId: string }) {
               <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f97316" stopOpacity={.35} /><stop offset="100%" stopColor="#f97316" stopOpacity={0} /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f0ee" />
               <XAxis dataKey="label" tick={{ fontSize: 10 }} minTickGap={24} />
-              <YAxis tick={{ fontSize: 10 }} domain={['auto', 'auto']} />
+              <YAxis tick={{ fontSize: 10 }} domain={domain} allowDataOverflow />
+              {ref && <ReferenceArea y1={ref.min} y2={ref.max} fill="#a8a29e" fillOpacity={0.12} stroke="none" ifOverflow="extendDomain" />}
+              {target && <ReferenceArea y1={target.min} y2={target.max} fill="#10b981" fillOpacity={0.14} stroke="#10b981" strokeOpacity={0.4} strokeDasharray="4 3" ifOverflow="extendDomain" />}
               <Tooltip formatter={v => [`${Number(v).toFixed(2)} kg`, 'Weight']} />
               <Area type="monotone" dataKey="kg" stroke="#f97316" fill="url(#g)" strokeWidth={2} dot={points.length < 40} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <p className="mt-1 text-[11px] text-stone-400">{points.length} points{RANGES[range].days > 180 || RANGES[range].days === 0 ? ' (weekly average)' : ''}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-stone-400">
+          <span>{points.length} points{RANGES[range].days > 180 || RANGES[range].days === 0 ? ' (weekly average)' : ''}</span>
+          {target && <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-sm border border-dashed border-emerald-500 bg-emerald-100" />{result?.targetRange?.label}</span>}
+          {ref && <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-sm bg-stone-200" />Typical breed range</span>}
+        </div>
       </Card>
       {ms.data && ms.data.length > 0 && (
         <div className="flex flex-wrap gap-1">{ms.data.map(m => <Chip key={m.id} tone="brand">🏆 {m.label}</Chip>)}</div>

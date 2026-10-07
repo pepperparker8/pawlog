@@ -30,7 +30,7 @@ export function useWeights(catId: string) {
   return useQuery({
     queryKey: keys.weights(catId),
     queryFn: async () => {
-      const { data, error } = await supabase.from('weight_logs').select('id, cat_id, logged_at, weight_kg, body_condition_score, note')
+      const { data, error } = await untypedDb.from('weight_logs').select('id, cat_id, logged_at, weight_kg, body_condition_score, body_condition_source, note')
         .eq('cat_id', catId).order('logged_at').limit(400)
       if (error) throw error
       return data as WeightLog[]

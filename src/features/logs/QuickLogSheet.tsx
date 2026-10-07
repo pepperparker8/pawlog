@@ -171,6 +171,10 @@ function KindFields({ kind, f, set, foods, meds }: { kind: Kind; f: Record<strin
         <Field label="Weight (kg)"><Input type="number" inputMode="decimal" step="0.01" min={0.05} max={49} required value={f.weight_kg ?? ''} onChange={e => set('weight_kg', e.target.value)} placeholder="3.50" /></Field>
         <Field label="Body condition"><Select value={f.body_condition_score ?? ''} onChange={e => set('body_condition_score', e.target.value)}>
           <option value="">Not assessed</option>{BCS.map(([v, l]) => <option key={v} value={v}>{v}/9 · {l}</option>)}</Select></Field>
+        {f.body_condition_score && (
+          <Field label="Assessed by" className="col-span-2"><Select value={f.body_condition_source ?? 'owner'} onChange={e => set('body_condition_source', e.target.value)}>
+            <option value="owner">Owner observation</option><option value="vet">Vet assessment</option></Select></Field>
+        )}
       </div>)
     case 'symptom': return (
       <div className="grid grid-cols-2 gap-3">
@@ -237,7 +241,8 @@ export function buildFields(kind: Kind, f: Record<string, string>): { row: Recor
     case 'weight': {
       const w = num(f.weight_kg)
       if (w === null || !(w > 0 && w < 50)) return { error: 'Enter a weight between 0 and 50 kg.' }
-      return { row: { logged_at, note, weight_kg: w, body_condition_score: num(f.body_condition_score) } }
+      const bcs = num(f.body_condition_score)
+      return { row: { logged_at, note, weight_kg: w, body_condition_score: bcs, body_condition_source: bcs == null ? null : f.body_condition_source === 'vet' ? 'vet' : 'owner' } }
     }
     case 'symptom': {
       if (!txt(f.symptom)) return { error: 'What did you notice?' }

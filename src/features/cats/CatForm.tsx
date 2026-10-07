@@ -10,6 +10,7 @@ import { uploadPhoto } from '../photos/api'
 import { invalidateHousehold } from '../../lib/queryClient'
 import { Camera } from 'lucide-react'
 import type { Cat } from '../../lib/types'
+import { useBreeds } from '../weight/api'
 
 const EMPTY: CatInput = { name: '', nickname: '', breed: '', color: '', sex: 'unknown', date_of_birth: '', dob_is_estimate: false, adopted_on: '',
   microchip_id: '', neutered: null, blood_type: '', allergies: '', known_conditions: '', emergency_notes: '', vet_name: '', clinic_name: '', clinic_phone: '' }
@@ -20,6 +21,7 @@ export function CatForm() {
   const { current, canEdit } = useHousehold()
   const existing = useCat(id)
   const save = useSaveCat(current!.id)
+  const breeds = useBreeds()
   const archive = useArchiveCat(current!.id)
   const toast = useToast()
   const [f, setF] = useState<CatInput>(EMPTY)
@@ -76,7 +78,8 @@ export function CatForm() {
         <Field label="Name" className="col-span-2"><Input required value={f.name} onChange={e => set('name', e.target.value)} /></Field>
         <Field label="Nickname"><Input value={f.nickname ?? ''} onChange={e => set('nickname', e.target.value)} /></Field>
         <Field label="Sex"><Select value={f.sex} onChange={e => set('sex', e.target.value as Cat['sex'])}><option value="unknown">Unknown</option><option value="female">Female</option><option value="male">Male</option></Select></Field>
-        <Field label="Breed"><Input value={f.breed ?? ''} onChange={e => set('breed', e.target.value)} placeholder="Domestic shorthair" /></Field>
+        <Field label="Breed"><Input value={f.breed ?? ''} onChange={e => set('breed', e.target.value)} placeholder="Domestic shorthair" list="breed-options" autoComplete="off" />
+          <datalist id="breed-options">{(breeds.data ?? []).map(b => <option key={b.code} value={b.name} />)}</datalist></Field>
         <Field label="Color"><Input value={f.color ?? ''} onChange={e => set('color', e.target.value)} placeholder="Orange tabby" /></Field>
         <Field label="Date of birth"><Input type="date" value={f.date_of_birth ?? ''} onChange={e => set('date_of_birth', e.target.value)} /></Field>
         <label className="flex items-end gap-2 pb-3 text-sm"><input type="checkbox" checked={!!f.dob_is_estimate} onChange={e => set('dob_is_estimate', e.target.checked)} /> Estimated</label>

@@ -45,7 +45,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
 
 export function Card({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className={cx('rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100', onClick && 'cursor-pointer active:bg-stone-50', className)}>
+    <div onClick={onClick} className={cx('rounded-2xl bg-white shadow-sm ring-1 ring-stone-100', !/(^|\s)p-\d/.test(className ?? '') && 'p-4', onClick && 'cursor-pointer active:bg-stone-50', className)}>
       {children}
     </div>
   )

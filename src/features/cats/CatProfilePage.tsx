@@ -13,6 +13,7 @@ import { useGiveDose, useMedsToday } from '../health/api'
 import { PhotoGrid } from '../photos/PhotoGrid'
 import { PhotoPicker } from '../photos/PhotoPicker'
 import { PassportTab } from './PassportTab'
+import { WeightStatusCard } from '../weight/WeightStatusCard'
 import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { ago, catAge, courseDay, dueLabel, isTodayIso, kg, timeLabel } from '../../lib/format'
 import { friendlyError } from '../../lib/errors'
@@ -149,6 +150,19 @@ function SwitchDot({ c, active, to }: { c: CatSummary; active: boolean; to: stri
   )
 }
 
+function Protection({ to, emoji, label, ok, d }: { to: string; emoji: string; label: string; ok: string; d: ReturnType<typeof dueLabel> }) {
+  const text = d.tone === 'ok' ? ok : d.tone === 'none' ? 'No record' : d.text
+  const sub = d.tone === 'ok' ? `next ${d.text}` : d.tone === 'none' ? 'add a record' : d.tone === 'overdue' ? 'overdue' : 'due soon'
+  return (
+    <Link to={to} replace className={cx('rounded-2xl border p-3 transition active:scale-[0.98]',
+      d.tone === 'overdue' ? 'border-red-200 bg-red-50' : d.tone === 'soon' ? 'border-amber-200 bg-amber-50' : 'border-stone-200 bg-white')}>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-stone-500">{label}</div>
+      <div className="mt-0.5 font-bold">{emoji} {text}</div>
+      <div className="text-xs text-stone-500">{sub}</div>
+    </Link>
+  )
+}
+
 function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: CatSummary; canLog: boolean; onLog: (k: Kind) => void }) {
   const meds = useMedsToday(hid)
   const give = useGiveDose(hid)
@@ -158,10 +172,9 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
   const catMeds = (meds.data ?? []).filter(m => m.cat_id === id)
   const fed = isTodayIso(s.last_fed_at), litter = isTodayIso(s.last_litter_at)
   const due = [
-    { label: 'Vaccine', d: dueLabel(s.next_vaccine_due), to: 'health' },
-    { label: 'Parasite care', d: dueLabel(s.next_parasite_due), to: 'health' },
     { label: 'Care task', d: dueLabel(s.next_task_due), to: '' },
   ].filter(x => x.d.tone !== 'none')
+  const vaccine = dueLabel(s.next_vaccine_due), parasite = dueLabel(s.next_parasite_due)
   const tone = (t: string) => (t === 'overdue' ? 'bad' : t === 'soon' ? 'warn' : 'ok') as 'bad' | 'warn' | 'ok'
   const events = recent.data?.pages[0]?.slice(0, 5) ?? []
 
@@ -183,6 +196,17 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
             )
           })}
         </Card>
+      </section>
+
+      <section>
+        <SectionTitle action={<Link to={`/cats/${id}/growth`} replace className="flex items-center text-xs font-semibold text-paw-600">Growth<ChevronRight className="h-3.5 w-3.5" /></Link>}>Health journey</SectionTitle>
+        <div className="space-y-3">
+          <WeightStatusCard catId={id} compact />
+          <div className="grid grid-cols-2 gap-3">
+            <Protection to={`/cats/${id}/health`} emoji="💉" label="Vaccines" ok="Protected" d={vaccine} />
+            <Protection to={`/cats/${id}/health`} emoji="🛡️" label="Parasite care" ok="Covered" d={parasite} />
+          </div>
+        </div>
       </section>
 
       {due.length > 0 && (

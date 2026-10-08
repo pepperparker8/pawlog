@@ -3,9 +3,10 @@ import { Area, AreaChart, CartesianGrid, ReferenceArea, ResponsiveContainer, Too
 import { format, parseISO, subDays } from 'date-fns'
 import { useWeights, useWeightWeekly, useMilestones } from '../health/api'
 import { Card, Chip, EmptyState, Spinner, cx } from '../../components/ui'
-import { kg, dateLabel } from '../../lib/format'
+import { kg, dateLabel, signedKg } from '../../lib/format'
 import { useWeightStatus } from '../weight/api'
 import { WeightStatusCard } from '../weight/WeightStatusCard'
+import { weightInsights } from './insights'
 
 const RANGES = [{ label: '1M', days: 30 }, { label: '3M', days: 90 }, { label: '1Y', days: 365 }, { label: 'All', days: 0 }]
 
@@ -46,8 +47,8 @@ export function GrowthChart({ catId }: { catId: string }) {
       <WeightStatusCard catId={catId} />
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Latest" value={kg(last.weight_kg)} sub={dateLabel(last.logged_at)} />
-        <Stat label="Since last" value={`${delta >= 0 ? '+' : ''}${delta.toFixed(2)} kg`} sub={prev ? dateLabel(prev.logged_at) : '—'} tone={Math.abs(delta) > 0.3 ? 'warn' : 'ok'} />
-        <Stat label="Since first" value={`${(Number(last.weight_kg) - Number(first.weight_kg)).toFixed(2)} kg`} sub={dateLabel(first.logged_at)} />
+        <Stat label="Since last" value={signedKg(delta)} sub={prev ? dateLabel(prev.logged_at) : '—'} tone={Math.abs(delta) > 0.3 ? 'warn' : 'ok'} />
+        <Stat label="Since first" value={signedKg(Number(last.weight_kg) - Number(first.weight_kg))} sub={dateLabel(first.logged_at)} />
       </div>
       <Card>
         <div className="mb-2 flex gap-1">
@@ -73,8 +74,21 @@ export function GrowthChart({ catId }: { catId: string }) {
           {ref && <span className="flex items-center gap-1"><i className="inline-block h-2.5 w-2.5 rounded-sm bg-stone-200" />Typical breed range</span>}
         </div>
       </Card>
+      <Card className="space-y-1.5" aria-label="What you recorded">
+        <div className="text-xs font-semibold uppercase tracking-wide text-stone-500">What you recorded</div>
+        {weightInsights(w.data).map(i => (
+          <div key={i.code} className="flex gap-2 text-sm text-stone-700"><span aria-hidden>{i.emoji}</span><span>{i.text}</span></div>
+        ))}
+      </Card>
       {ms.data && ms.data.length > 0 && (
-        <div className="flex flex-wrap gap-1">{ms.data.map(m => <Chip key={m.id} tone="brand">🏆 {m.label}</Chip>)}</div>
+        <section aria-label="Milestones">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">Milestones</div>
+          <div className="flex flex-wrap gap-1">
+            {[...ms.data].sort((a, b) => b.reached_at.localeCompare(a.reached_at)).map(m => (
+              <Chip key={m.id} tone="brand">{milestoneIcon(m.code)} {m.label} · {dateLabel(m.reached_at)}</Chip>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )
@@ -88,4 +102,13 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub: 
       <div className="text-[10px] text-stone-400">{sub}</div>
     </Card>
   )
+}
+
+function milestoneIcon(code: string) {
+  if (code === 'first_weigh_in') return '🐾'
+  if (code.startsWith('weighins_')) return '📒'
+  if (code.startsWith('tracked_')) return '📅'
+  if (code.startsWith('weight_')) return '🍼'
+  if (code.includes('range')) return '🎯'
+  return '⭐'
 }

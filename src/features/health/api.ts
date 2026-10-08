@@ -53,7 +53,7 @@ export function useMilestones(catId: string) {
   return useQuery({
     queryKey: keys.milestones(catId),
     queryFn: async () => {
-      const { data, error } = await supabase.from('milestones').select('*').eq('cat_id', catId).order('reached_at', { ascending: false })
+      const { data, error } = await supabase.from('milestones').select('*').eq('cat_id', catId).is('archived_at', null).order('reached_at', { ascending: false })
       if (error) throw error
       return data as Milestone[]
     },

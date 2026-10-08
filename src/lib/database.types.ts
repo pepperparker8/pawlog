@@ -143,6 +143,7 @@ export type Database = {
           description: string
           icon: string
           name: string
+          retired: boolean
           scope: string
           sort_order: number
         }
@@ -152,6 +153,7 @@ export type Database = {
           description: string
           icon?: string
           name: string
+          retired?: boolean
           scope?: string
           sort_order?: number
         }
@@ -161,6 +163,7 @@ export type Database = {
           description?: string
           icon?: string
           name?: string
+          retired?: boolean
           scope?: string
           sort_order?: number
         }
@@ -239,6 +242,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      breed_weight_references: {
+        Row: {
+          breed_code: string
+          id: string
+          last_reviewed: string
+          max_kg: number
+          min_kg: number
+          sex: string
+          source: string
+          source_url: string
+        }
+        Insert: {
+          breed_code: string
+          id?: string
+          last_reviewed: string
+          max_kg: number
+          min_kg: number
+          sex?: string
+          source: string
+          source_url: string
+        }
+        Update: {
+          breed_code?: string
+          id?: string
+          last_reviewed?: string
+          max_kg?: number
+          min_kg?: number
+          sex?: string
+          source?: string
+          source_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breed_weight_references_breed_code_fkey"
+            columns: ["breed_code"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      breeds: {
+        Row: {
+          aliases: string[]
+          care_notes: string | null
+          coat: string | null
+          code: string
+          growth_notes: string | null
+          last_reviewed: string | null
+          maturity_months_max: number | null
+          maturity_months_min: number | null
+          maturity_notes: string | null
+          name: string
+          source: string | null
+          source_url: string | null
+        }
+        Insert: {
+          aliases?: string[]
+          care_notes?: string | null
+          coat?: string | null
+          code: string
+          growth_notes?: string | null
+          last_reviewed?: string | null
+          maturity_months_max?: number | null
+          maturity_months_min?: number | null
+          maturity_notes?: string | null
+          name: string
+          source?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          aliases?: string[]
+          care_notes?: string | null
+          coat?: string | null
+          code?: string
+          growth_notes?: string | null
+          last_reviewed?: string | null
+          maturity_months_max?: number | null
+          maturity_months_min?: number | null
+          maturity_notes?: string | null
+          name?: string
+          source?: string | null
+          source_url?: string | null
+        }
+        Relationships: []
       }
       care_task_completions: {
         Row: {
@@ -395,6 +484,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      care_tips: {
+        Row: {
+          active: boolean
+          audience: Json
+          body: string
+          code: string
+          icon: string | null
+          kind: string
+          reviewed: string
+          source: string
+          source_url: string
+          title: string
+          topic: string
+          trigger: string | null
+        }
+        Insert: {
+          active?: boolean
+          audience?: Json
+          body: string
+          code: string
+          icon?: string | null
+          kind: string
+          reviewed: string
+          source: string
+          source_url: string
+          title: string
+          topic: string
+          trigger?: string | null
+        }
+        Update: {
+          active?: boolean
+          audience?: Json
+          body?: string
+          code?: string
+          icon?: string | null
+          kind?: string
+          reviewed?: string
+          source?: string
+          source_url?: string
+          title?: string
+          topic?: string
+          trigger?: string | null
+        }
+        Relationships: []
       }
       cat_conditions: {
         Row: {
@@ -636,6 +770,83 @@ export type Database = {
           },
         ]
       }
+      cat_weight_targets: {
+        Row: {
+          archived_at: string | null
+          cat_id: string
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          max_kg: number | null
+          min_kg: number | null
+          note: string | null
+          set_on: string
+          source: string
+          target_kg: number | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          cat_id: string
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          max_kg?: number | null
+          min_kg?: number | null
+          note?: string | null
+          set_on?: string
+          source: string
+          target_kg?: number | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          cat_id?: string
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          max_kg?: number | null
+          min_kg?: number | null
+          note?: string | null
+          set_on?: string
+          source?: string
+          target_kg?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cat_weight_targets_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "cat_weight_targets_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cat_weight_targets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cat_weight_targets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cats: {
         Row: {
           adopted_on: string | null
@@ -643,6 +854,7 @@ export type Database = {
           archived_at: string | null
           blood_type: string | null
           breed: string | null
+          breed_code: string | null
           clinic_name: string | null
           clinic_phone: string | null
           color: string | null
@@ -670,6 +882,7 @@ export type Database = {
           archived_at?: string | null
           blood_type?: string | null
           breed?: string | null
+          breed_code?: string | null
           clinic_name?: string | null
           clinic_phone?: string | null
           color?: string | null
@@ -697,6 +910,7 @@ export type Database = {
           archived_at?: string | null
           blood_type?: string | null
           breed?: string | null
+          breed_code?: string | null
           clinic_name?: string | null
           clinic_phone?: string | null
           color?: string | null
@@ -719,6 +933,13 @@ export type Database = {
           vet_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "cats_breed_code_fkey"
+            columns: ["breed_code"]
+            isOneToOne: false
+            referencedRelation: "breeds"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "cats_created_by_fkey"
             columns: ["created_by"]
@@ -1265,6 +1486,54 @@ export type Database = {
           },
         ]
       }
+      knowledge_articles: {
+        Row: {
+          active: boolean
+          audience: Json
+          body_md: string
+          category: string
+          icon: string | null
+          read_minutes: number
+          reviewed: string
+          slug: string
+          sort_order: number
+          sources: Json
+          summary: string
+          title: string
+          urgent: boolean
+        }
+        Insert: {
+          active?: boolean
+          audience?: Json
+          body_md: string
+          category: string
+          icon?: string | null
+          read_minutes?: number
+          reviewed: string
+          slug: string
+          sort_order?: number
+          sources?: Json
+          summary: string
+          title: string
+          urgent?: boolean
+        }
+        Update: {
+          active?: boolean
+          audience?: Json
+          body_md?: string
+          category?: string
+          icon?: string | null
+          read_minutes?: number
+          reviewed?: string
+          slug?: string
+          sort_order?: number
+          sources?: Json
+          summary?: string
+          title?: string
+          urgent?: boolean
+        }
+        Relationships: []
+      }
       level_config: {
         Row: {
           level: number
@@ -1446,6 +1715,7 @@ export type Database = {
       }
       milestones: {
         Row: {
+          archived_at: string | null
           cat_id: string
           code: string
           household_id: string
@@ -1454,6 +1724,7 @@ export type Database = {
           reached_at: string
         }
         Insert: {
+          archived_at?: string | null
           cat_id: string
           code: string
           household_id: string
@@ -1462,6 +1733,7 @@ export type Database = {
           reached_at?: string
         }
         Update: {
+          archived_at?: string | null
           cat_id?: string
           code?: string
           household_id?: string
@@ -2315,9 +2587,123 @@ export type Database = {
           },
         ]
       }
+      weekly_quest_completions: {
+        Row: {
+          cat_id: string
+          completed_at: string
+          household_id: string
+          id: string
+          quest_code: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          cat_id: string
+          completed_at?: string
+          household_id: string
+          id?: string
+          quest_code: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          cat_id?: string
+          completed_at?: string
+          household_id?: string
+          id?: string
+          quest_code?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_quest_completions_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "weekly_quest_completions_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_quest_completions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_quest_completions_quest_code_fkey"
+            columns: ["quest_code"]
+            isOneToOne: false
+            referencedRelation: "weekly_quest_templates"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "weekly_quest_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_quest_templates: {
+        Row: {
+          active: boolean
+          coat_targets: Json
+          code: string
+          description: string
+          event_type: string
+          icon: string
+          sort_order: number
+          target: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          active?: boolean
+          coat_targets?: Json
+          code: string
+          description: string
+          event_type: string
+          icon: string
+          sort_order?: number
+          target?: number
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          active?: boolean
+          coat_targets?: Json
+          code?: string
+          description?: string
+          event_type?: string
+          icon?: string
+          sort_order?: number
+          target?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_quest_templates_event_type_fkey"
+            columns: ["event_type"]
+            isOneToOne: false
+            referencedRelation: "xp_rules"
+            referencedColumns: ["event_type"]
+          },
+        ]
+      }
       weight_logs: {
         Row: {
           body_condition_score: number | null
+          body_condition_source: string | null
           cat_id: string
           client_event_id: string | null
           created_at: string
@@ -2331,6 +2717,7 @@ export type Database = {
         }
         Insert: {
           body_condition_score?: number | null
+          body_condition_source?: string | null
           cat_id: string
           client_event_id?: string | null
           created_at?: string
@@ -2344,6 +2731,7 @@ export type Database = {
         }
         Update: {
           body_condition_score?: number | null
+          body_condition_source?: string | null
           cat_id?: string
           client_event_id?: string | null
           created_at?: string
@@ -2391,6 +2779,7 @@ export type Database = {
           active: boolean
           daily_cap: number
           event_type: string
+          full_per_day: number
           label: string
           window_minutes: number
           xp: number
@@ -2399,6 +2788,7 @@ export type Database = {
           active?: boolean
           daily_cap?: number
           event_type: string
+          full_per_day?: number
           label: string
           window_minutes?: number
           xp: number
@@ -2407,6 +2797,7 @@ export type Database = {
           active?: boolean
           daily_cap?: number
           event_type?: string
+          full_per_day?: number
           label?: string
           window_minutes?: number
           xp?: number
@@ -2632,12 +3023,30 @@ export type Database = {
         Returns: Record<string, unknown>
       }
       can_edit_household: { Args: { hid: string }; Returns: boolean }
+      care_rhythm: {
+        Args: { p_household: string; p_weeks?: number }
+        Returns: {
+          cat_id: string
+          goals_done: number
+          goals_total: number
+          week_start: string
+        }[]
+      }
       check_badges: {
         Args: { p_cat: string; p_household: string; p_user: string }
         Returns: string[]
       }
       complete_quests: {
         Args: { p_date: string; p_household: string; p_user: string }
+        Returns: string[]
+      }
+      complete_weekly_quests: {
+        Args: {
+          p_cat: string
+          p_household: string
+          p_user: string
+          p_week: string
+        }
         Returns: string[]
       }
       create_household: {
@@ -2736,6 +3145,22 @@ export type Database = {
       }
       seed_demo_household: { Args: { p_name?: string }; Returns: string }
       sweep_reminders: { Args: never; Returns: number }
+      week_start_of: { Args: { p_at: string }; Returns: string }
+      weekly_quest_progress: {
+        Args: { p_household: string; p_week?: string }
+        Returns: {
+          cat_id: string
+          cat_name: string
+          completed: boolean
+          description: string
+          done: number
+          icon: string
+          quest_code: string
+          target: number
+          title: string
+          xp_reward: number
+        }[]
+      }
     }
     Enums: {
       care_task_kind:

@@ -210,7 +210,7 @@ export function getWeightStatus(input: StatusInput): WeightStatusResult {
 function rangeReason(kg: number, b: Band) {
   const r = Number.isFinite(b.max) && b.min > 0 ? `${fmt(b.min)} to ${fmt(b.max)}` : Number.isFinite(b.max) ? `up to ${fmt(b.max)}` : `from ${fmt(b.min)}`
   const where = kg < b.min ? 'below' : kg > b.max ? 'above' : 'inside'
-  return `${fmt(kg)} is ${where} the ${b.label.toLowerCase()} of ${r}.`
+  return `${fmt(kg)} is ${where} the ${b.label.charAt(0).toLowerCase()}${b.label.slice(1)} of ${r}.`
 }
 
 export interface StatusView { label: string; emoji: string; tone: 'ok' | 'warn' | 'neutral' }

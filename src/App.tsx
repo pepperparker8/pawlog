@@ -23,6 +23,7 @@ import { AchievementsPage } from './features/gamification/AchievementsPage'
 import { NotificationsPage } from './features/notifications/NotificationsPage'
 import { SearchPage } from './features/search/SearchPage'
 import { VetSummaryPage } from './features/vet/VetSummaryPage'
+import { ArticlePage, LearnPage } from './features/learn/LearnPage'
 import { useRealtime } from './features/notifications/api'
 import { startQueueSync } from './lib/offlineQueue'
 import { useCreateHousehold } from './features/household/api'
@@ -56,6 +57,8 @@ export default function App() {
                     <Route path="more/notifications" element={<NotificationsPage />} />
                     <Route path="more/search" element={<SearchPage />} />
                     <Route path="more/vet-summary" element={<VetSummaryPage />} />
+                    <Route path="learn" element={<LearnPage />} />
+                    <Route path="learn/:slug" element={<ArticlePage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
                 </Route>

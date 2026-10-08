@@ -5,10 +5,12 @@ import { PageHeader } from '../../components/layout/PageHeader'
 import { LevelCard } from './LevelCard'
 import { useBadges, useLevels, useRecentXp, useUserBadges, useXpRules } from './api'
 import { ago } from '../../lib/format'
+import type { XpRule } from '../../lib/types'
 
 const ICONS: Record<string, string> = {
   paw: '🐾', scale: '⚖️', chart: '📈', bowl: '🍽️', sparkle: '✨', brush: '🧼', camera: '📷', pill: '💊', stetho: '🩺',
   shield: '🛡️', flame: '🔥', crown: '👑', star: '⭐', cats: '🐈', home: '🏠', cake: '🎂',
+  yarn: '🧶', bug: '🐞', leaf: '🌿', target: '🎯',
 }
 
 export function AchievementsPage() {
@@ -21,14 +23,15 @@ export function AchievementsPage() {
   const recent = useRecentXp(current!.id)
   if (!badges.data || !mine.data) return <Spinner />
   const earned = new Set(mine.data.map(b => b.badge_code))
+  const shown = badges.data.filter(b => !b.retired || earned.has(b.code))
   return (
     <div className="space-y-5">
       <PageHeader title="Achievements" back="/more" />
       <LevelCard />
       <section>
-        <SectionTitle>Badges · {earned.size}/{badges.data.length}</SectionTitle>
+        <SectionTitle>Badges · {shown.filter(b => earned.has(b.code)).length}/{shown.length}</SectionTitle>
         <div className="grid grid-cols-3 gap-2">
-          {badges.data.map(b => {
+          {shown.map(b => {
             const has = earned.has(b.code)
             return (
               <Card key={b.code} className={`flex flex-col items-center p-3 text-center ${has ? '' : 'opacity-50 grayscale'}`}>
@@ -45,7 +48,7 @@ export function AchievementsPage() {
         <Card className="divide-y divide-stone-100 p-0">
           {recent.data?.length ? recent.data.map(x => (
             <div key={x.id} className="flex items-center justify-between px-4 py-2 text-sm">
-              <span>{rules.data?.find(r => r.event_type === x.event_type)?.label ?? x.event_type}{x.reason?.startsWith('quest') && ' (quest)'}</span>
+              <span>{rules.data?.find(r => r.event_type === x.event_type)?.label ?? x.event_type}{x.reason?.startsWith('quest') ? ' (quest)' : x.reason?.startsWith('weekly') ? '' : x.reason === 'diminished' ? ' (repeat)' : ''}</span>
               <span className="text-xs text-stone-500">{ago(x.created_at)}</span>
               <span className={`ml-3 font-bold ${x.xp > 0 ? 'text-paw-600' : 'text-stone-400'}`}>+{x.xp}</span>
             </div>
@@ -58,12 +61,12 @@ export function AchievementsPage() {
           {rules.data?.filter(r => r.xp > 0).map(r => (
             <div key={r.event_type} className="flex items-center justify-between px-4 py-2 text-sm">
               <span>{r.label}</span>
-              <span className="text-xs text-stone-500">{r.window_minutes ? `once per ${r.window_minutes >= 60 ? `${r.window_minutes / 60} h` : `${r.window_minutes} min`} per cat` : 'every time'}</span>
+              <span className="text-xs text-stone-500">{xpRuleNote(r)}</span>
               <span className="ml-3 font-bold text-paw-600">+{r.xp}</span>
             </div>
           ))}
         </Card>
-        <p className="mt-2 text-xs text-stone-500">XP rewards care actions, never a cat's health. Daily caps keep it honest.</p>
+        <p className="mt-2 text-xs text-stone-500">XP rewards care actions, never a cat's weight or health. After the daily full-XP count, each extra log of the same kind earns half the one before, so logging more than needed adds little.</p>
       </section>
       <section>
         <SectionTitle>Levels</SectionTitle>
@@ -77,4 +80,10 @@ export function AchievementsPage() {
       </section>
     </div>
   )
+}
+
+function xpRuleNote(r: XpRule) {
+  if (r.full_per_day > 0) return r.full_per_day === 1 ? 'full XP once a day per cat' : `full XP ${r.full_per_day}× a day per cat`
+  if (r.window_minutes) return `once per ${r.window_minutes >= 60 ? `${r.window_minutes / 60} h` : `${r.window_minutes} min`} per cat`
+  return 'every time'
 }

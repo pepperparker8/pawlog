@@ -33,6 +33,10 @@ export function dateLabel(iso: string | null | undefined): string {
   return iso ? format(parseISO(iso), 'd MMM yyyy') : '—'
 }
 
+export function signedKg(n: number): string {
+  return `${n >= 0 ? '+' : '−'}${Math.abs(n).toFixed(2)} kg`
+}
+
 export function kg(n: number | null | undefined): string {
   return n == null ? '—' : `${Number(n).toFixed(2)} kg`
 }

@@ -14,6 +14,8 @@ import { PhotoGrid } from '../photos/PhotoGrid'
 import { PhotoPicker } from '../photos/PhotoPicker'
 import { PassportTab } from './PassportTab'
 import { WeightStatusCard } from '../weight/WeightStatusCard'
+import { TipsCard } from '../tips/TipsCard'
+import { WeeklyGoals } from '../gamification/WeeklyGoals'
 import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { ago, catAge, courseDay, dueLabel, isTodayIso, kg, timeLabel } from '../../lib/format'
 import { friendlyError } from '../../lib/errors'
@@ -78,7 +80,6 @@ export function CatProfilePage() {
             <div className="mt-1.5 flex flex-wrap gap-1">
               {c.archived_at && <Chip>Archived</Chip>}
               {c.deceased_on && <Chip>In memory</Chip>}
-              {s && <Chip tone="brand">Care level {s.level}</Chip>}
               {s?.last_weight_kg != null && <Chip>{kg(s.last_weight_kg)}</Chip>}
             </div>
           </div>
@@ -209,6 +210,8 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
         </div>
       </section>
 
+      <TipsCard hid={hid} catId={id} name={s.name} />
+
       {due.length > 0 && (
         <section>
           <SectionTitle>Coming up</SectionTitle>
@@ -221,6 +224,8 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
           </Card>
         </section>
       )}
+
+      <WeeklyGoals hid={hid} catId={id} />
 
       <div className="grid grid-cols-2 gap-3">
         <Stat label="Weight" value={kg(s.last_weight_kg)} sub={s.last_weight_at ? `weighed ${ago(s.last_weight_at)}` : 'no weigh-in yet'} to={`/cats/${id}/growth`} />

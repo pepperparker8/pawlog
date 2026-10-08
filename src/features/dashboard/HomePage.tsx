@@ -7,6 +7,7 @@ import { useCatSummaries, useSignedUrl } from '../cats/api'
 import { useHouseholdToday, useOnThisDay, usePatterns, KIND_META } from '../timeline/api'
 import { useQuests } from '../gamification/api'
 import { LevelCard } from '../gamification/LevelCard'
+import { WeeklyGoals } from '../gamification/WeeklyGoals'
 import { catAge, dateLabel, dueLabel, isTodayIso, kg } from '../../lib/format'
 import { useSeedDemo } from '../household/api'
 import { useToast } from '../../components/ui/Toast'
@@ -15,6 +16,7 @@ import type { CatSummary } from '../../lib/types'
 import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { useWeightStatus } from '../weight/api'
 import { statusView } from '../weight/status'
+import { HomeTip } from '../tips/TipsCard'
 
 export function HomePage() {
   const { current, canEdit } = useHousehold()
@@ -103,6 +105,8 @@ export function HomePage() {
         </section>
       )}
 
+      <HomeTip hid={current!.id} />
+
       {quests.data && quests.data.length > 0 && (
         <section>
           <SectionTitle action={<span className="text-xs text-stone-500">{questsDone}/{quests.data.length} done</span>}>Today's quests</SectionTitle>
@@ -120,6 +124,8 @@ export function HomePage() {
           </Card>
         </section>
       )}
+
+      <WeeklyGoals hid={hid} />
 
       {otd.data && otd.data.length > 0 && (
         <section>

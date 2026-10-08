@@ -60,13 +60,15 @@ export interface VaccinationRecord { id: string; cat_id: string; vaccine_name: s
 export interface ParasiteTreatment { id: string; cat_id: string; kind: string; product: string | null; given_on: string; next_due_on: string | null; note: string | null }
 export interface FoodProfile { id: string; household_id: string; brand: string | null; product: string; type: string; kcal_per_100g: number | null; serving_size_g: number | null; archived_at: string | null }
 
-export interface XpRule { event_type: string; label: string; xp: number; window_minutes: number; daily_cap: number; active: boolean }
+export interface XpRule { event_type: string; label: string; xp: number; window_minutes: number; daily_cap: number; full_per_day: number; active: boolean }
 export interface LevelConfig { level: number; min_xp: number; title: string; perk: string | null }
 export interface UserStats { user_id: string; total_xp: number; level: number; streak_current: number; streak_best: number; streak_last_on: string | null; freezes_left: number }
 export interface HouseholdStats { household_id: string; total_xp: number; level: number; streak_current: number; streak_best: number }
 export interface XpTransaction { id: string; household_id: string; user_id: string; cat_id: string | null; event_type: string; xp: number; reason: string | null; created_at: string }
-export interface Badge { code: string; name: string; description: string; icon: string; scope: 'user' | 'cat' | 'household'; sort_order: number }
+export interface Badge { code: string; name: string; description: string; icon: string; scope: 'user' | 'cat' | 'household'; sort_order: number; retired: boolean }
 export interface UserBadge { user_id: string; badge_code: string; cat_id: string; household_id: string; earned_at: string }
+export interface WeeklyQuest { cat_id: string; cat_name: string; quest_code: string; title: string; description: string; icon: string; xp_reward: number; target: number; done: number; completed: boolean }
+export interface RhythmWeek { cat_id: string; week_start: string; goals_done: number; goals_total: number }
 export interface QuestProgress { quest_code: string; title: string; description: string; xp_reward: number; target: number; done: number; completed: boolean }
 
 export interface Pattern { cat_id: string; cat_name: string; code: string; severity: 'info' | 'watch' | 'act'; title: string; detail: string; since: string }
@@ -74,4 +76,4 @@ export interface HouseholdToday { date: string; cats: number; logs_today: number
 
 export interface Notification { id: string; household_id: string; user_id: string; cat_id: string | null; kind: string; title: string; body: string | null; link: string | null; read_at: string | null; created_at: string }
 export interface SearchHit { kind: string; id: string; cat_id: string | null; title: string; snippet: string; occurred_at: string }
-export interface Milestone { id: string; cat_id: string; code: string; label: string; reached_at: string }
+export interface Milestone { id: string; cat_id: string; code: string; label: string; reached_at: string; archived_at: string | null }

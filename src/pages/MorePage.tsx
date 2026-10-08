@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Bell, Bowl, Camera, ChevronRight, ClipboardList, FileText, Home, LogOut, Search, Trophy, Users } from './icons'
+import { BookOpen, Bell, Bowl, Camera, ChevronRight, ClipboardList, FileText, Home, LogOut, Search, Trophy, Users } from './icons'
 import { useAuth } from '../auth/AuthProvider'
 import { useHousehold } from '../household/HouseholdProvider'
 import { Card } from '../components/ui'
@@ -14,6 +14,7 @@ export function MorePage() {
   const unread = notif.data?.filter(n => !n.read_at).length ?? 0
 
   const items = [
+    { to: '/learn', icon: BookOpen, label: 'Learn: care guides' },
     { to: '/more/achievements', icon: Trophy, label: 'Achievements & XP' },
     { to: '/more/care', icon: ClipboardList, label: 'Care schedule' },
     { to: '/more/photos', icon: Camera, label: 'Photo memories' },

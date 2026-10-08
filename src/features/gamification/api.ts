@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { keys } from '../../lib/queryClient'
-import type { Badge, HouseholdStats, LevelConfig, QuestProgress, UserBadge, UserStats, XpRule, XpTransaction } from '../../lib/types'
+import type { Badge, HouseholdStats, LevelConfig, QuestProgress, RhythmWeek, UserBadge, UserStats, WeeklyQuest, XpRule, XpTransaction } from '../../lib/types'
 
 export function useUserStats(uid: string) {
   return useQuery({
@@ -78,6 +78,35 @@ export function useQuests(hid: string) {
       return data as QuestProgress[]
     },
   })
+}
+
+export function useWeeklyQuests(hid: string) {
+  return useQuery({
+    queryKey: keys.weeklyQuests(hid),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('weekly_quest_progress', { p_household: hid })
+      if (error) throw error
+      return (data ?? []) as unknown as WeeklyQuest[]
+    },
+  })
+}
+
+export function useCareRhythm(hid: string, weeks = 8) {
+  return useQuery({
+    queryKey: keys.rhythm(hid),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('care_rhythm', { p_household: hid, p_weeks: weeks })
+      if (error) throw error
+      return (data ?? []) as unknown as RhythmWeek[]
+    },
+  })
+}
+
+/** Weeks in which at least one weekly goal was met for any cat, oldest first. */
+export function rhythmWeeks(rows: RhythmWeek[]) {
+  const byWeek = new Map<string, number>()
+  for (const r of rows) byWeek.set(r.week_start, (byWeek.get(r.week_start) ?? 0) + r.goals_done)
+  return [...byWeek.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([week, done]) => ({ week, active: done > 0 }))
 }
 
 export function useRecentXp(hid: string, limit = 20) {

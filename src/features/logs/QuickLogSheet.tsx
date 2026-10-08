@@ -6,6 +6,7 @@ import { Avatar, Button, ErrorNote, Field, Input, Select, Sheet, Textarea, cx } 
 import { useToast } from '../../components/ui/Toast'
 import { fetchAward, useSubmitLog, type LogTable } from './api'
 import { useFoods } from '../care/api'
+import { FOOD_TYPES, foodType, lastFoodType, rememberFoodType } from '../care/foodTypes'
 import { useMedsToday, type MedToday } from '../health/api'
 import { friendlyError } from '../../lib/errors'
 import { nowLocalInput } from '../../lib/format'
@@ -45,7 +46,7 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
 
   useEffect(() => {
     if (!open) return
-    setF({ logged_at: nowLocalInput() }); setError(null); setMore(false); setKind(presetKind ?? 'feeding')
+    setF({ logged_at: nowLocalInput(), food_type: lastFoodType() }); setError(null); setMore(false); setKind(presetKind ?? 'feeding')
     setSelected(presetCat ? [presetCat] : [])
   }, [open, presetCat, presetKind])
 
@@ -68,6 +69,7 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
     if ('error' in fields) { setError(fields.error); return }
     try {
       const r = await submit.mutateAsync({ table: meta.table, householdId: hid, catIds: selected, fields: fields.row })
+      if (kind === 'feeding' && f.food_type) rememberFoodType(f.food_type)
       if (r.queued) toast.show('Saved offline. It will sync when you are back online.')
       else {
         const award = await fetchAward(r.ids)
@@ -143,22 +145,41 @@ function CatPick({ cat, on, onClick, compact }: { cat: CatSummary; on: boolean; 
   )
 }
 
-function KindFields({ kind, f, set, foods, meds, manageFoods }: { kind: Kind; f: Record<string, string>; set: (k: string, v: string) => void; foods: Array<{ id: string; product: string; brand: string | null }>; meds: MedToday[]; manageFoods: () => void }) {
+function KindFields({ kind, f, set, foods, meds, manageFoods }: { kind: Kind; f: Record<string, string>; set: (k: string, v: string) => void; foods: Array<{ id: string; product: string; brand: string | null; type: string }>; meds: MedToday[]; manageFoods: () => void }) {
   switch (kind) {
-    case 'feeding': return (
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Food" className="col-span-2">
-          <Select value={f.food_id ?? ''} onChange={e => set('food_id', e.target.value)}>
-            <option value="">Free text below</option>
-            {foods.map(x => <option key={x.id} value={x.id}>{x.brand ? `${x.brand} ` : ''}{x.product}</option>)}
-          </Select>
-          <button type="button" onClick={manageFoods} className="mt-1 text-xs font-semibold text-paw-700">{foods.length ? 'Manage foods' : 'Save your usual foods'}</button>
-        </Field>
-        {!f.food_id && <Field label="Food name" className="col-span-2"><Input value={f.food_name ?? ''} onChange={e => set('food_name', e.target.value)} placeholder="Tuna pouch" /></Field>}
-        <Field label="Amount"><Input type="number" inputMode="decimal" step="any" value={f.amount ?? ''} onChange={e => set('amount', e.target.value)} /></Field>
-        <Field label="Unit"><Select value={f.unit ?? 'g'} onChange={e => set('unit', e.target.value)}>{['g', 'ml', 'pouch', 'can', 'cup', 'piece', 'scoop'].map(u => <option key={u}>{u}</option>)}</Select></Field>
-        <Field label={`Appetite · ${f.appetite ?? '4'} of 5`} className="col-span-2"><input type="range" min={0} max={5} value={f.appetite ?? '4'} onChange={e => set('appetite', e.target.value)} className="w-full accent-paw-500" /></Field>
-      </div>)
+    case 'feeding': {
+      const type = foodType(f.food_type)
+      const saved = foods.filter(x => x.type === type.code)
+      const pickType = (code: string) => { set('food_type', code); set('food_id', ''); set('food_name', ''); set('unit', foodType(code).unit) }
+      return (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Food type">
+            {FOOD_TYPES.filter(t => t.code !== 'other').map(t => (
+              <Pill key={t.code} on={type.code === t.code} onClick={() => pickType(t.code)} role="radio">{t.label}</Pill>
+            ))}
+          </div>
+          <div>
+            <div className="mb-1.5 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-stone-500">
+              <span>{type.label}</span>
+              <button type="button" onClick={manageFoods} className="rounded-full px-2 py-1 normal-case text-paw-600">{saved.length ? 'Edit list' : 'Add product'}</button>
+            </div>
+            {saved.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {saved.map(x => {
+                  const on = f.food_id === x.id
+                  const name = `${x.brand ? `${x.brand} ` : ''}${x.product}`
+                  return <Pill key={x.id} tone="soft" on={on} onClick={() => { set('food_id', on ? '' : x.id); set('food_name', on ? '' : name) }}>{name}</Pill>
+                })}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Amount"><Input type="number" inputMode="decimal" step="any" value={f.amount ?? ''} onChange={e => set('amount', e.target.value)} placeholder="Optional" /></Field>
+            <Field label="Unit"><Select value={f.unit ?? type.unit} onChange={e => set('unit', e.target.value)}>{UNITS.map(u => <option key={u}>{u}</option>)}</Select></Field>
+            <Field label={`Appetite · ${f.appetite ?? '4'} of 5`} className="col-span-2"><input type="range" min={0} max={5} value={f.appetite ?? '4'} onChange={e => set('appetite', e.target.value)} className="w-full accent-paw-500" /></Field>
+          </div>
+        </div>)
+    }
     case 'water': return (
       <Field label="Action"><Select value={f.action ?? 'refreshed'} onChange={e => set('action', e.target.value)}><option value="refreshed">Refreshed bowl</option><option value="checked">Checked</option><option value="fountain_cleaned">Cleaned fountain</option></Select></Field>)
     case 'litter': return (
@@ -226,6 +247,19 @@ function KindFields({ kind, f, set, foods, meds, manageFoods }: { kind: Kind; f:
   }
 }
 
+const UNITS = ['g', 'ml', 'pouch', 'can', 'cup', 'piece', 'scoop']
+
+function Pill({ on, onClick, tone = 'solid', role, children }: { on: boolean; onClick: () => void; tone?: 'solid' | 'soft'; role?: string; children: React.ReactNode }) {
+  return (
+    <button type="button" role={role} aria-checked={role ? on : undefined} aria-pressed={role ? undefined : on} onClick={onClick}
+      className={cx('rounded-full px-3.5 py-2 text-sm font-medium transition', on
+        ? (tone === 'solid' ? 'bg-paw-500 text-white' : 'bg-paw-50 text-paw-700 ring-2 ring-paw-500')
+        : 'bg-white text-stone-700 ring-1 ring-stone-200')}>
+      {children}
+    </button>
+  )
+}
+
 /** WSAVA 9-point feline body condition scale. */
 export const BCS: Array<[number, string]> = [[1, 'Very thin'], [2, 'Very thin'], [3, 'Thin'], [4, 'Ideal'], [5, 'Ideal'], [6, 'Above ideal'], [7, 'Above ideal'], [8, 'Well above ideal'], [9, 'Well above ideal']]
 
@@ -236,7 +270,11 @@ export function buildFields(kind: Kind, f: Record<string, string>): { row: Recor
   const logged_at = f.logged_at ? new Date(f.logged_at).toISOString() : new Date().toISOString()
   const note = txt(f.note)
   switch (kind) {
-    case 'feeding': return { row: { logged_at, note, food_id: txt(f.food_id), food_name: txt(f.food_name), amount: num(f.amount), unit: f.amount ? f.unit ?? 'g' : null, appetite: num(f.appetite ?? '4') } }
+    case 'feeding': {
+      const type = foodType(f.food_type)
+      const food_id = txt(f.food_id)
+      return { row: { logged_at, note, food_id, food_name: (food_id && txt(f.food_name)) || type.label, amount: num(f.amount), unit: f.amount ? f.unit ?? type.unit : null, appetite: num(f.appetite ?? '4') } }
+    }
     case 'water': return { row: { logged_at, note, action: f.action ?? 'refreshed' } }
     case 'litter': return { row: { logged_at, note, action: f.action ?? 'scooped', stool: txt(f.stool), urine: txt(f.urine) } }
     case 'weight': {

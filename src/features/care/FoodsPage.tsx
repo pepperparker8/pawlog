@@ -7,6 +7,7 @@ import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
 import { useFoods, useSaveFood } from './api'
 import type { FoodProfile } from '../../lib/types'
+import { FOOD_TYPES, foodType } from './foodTypes'
 
 export function FoodsPage() {
   const { current, canEdit } = useHousehold()
@@ -23,7 +24,7 @@ export function FoodsPage() {
             <button key={f.id} onClick={() => canEdit && setEditing(f)} className="flex w-full items-center gap-3 px-4 py-2.5 text-left">
               <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{f.brand ? `${f.brand} ` : ''}{f.product}</div>
                 <div className="text-xs text-stone-500">{f.kcal_per_100g ? `${f.kcal_per_100g} kcal/100 g` : ''}{f.serving_size_g ? ` · ${f.serving_size_g} g serving` : ''}</div></div>
-              <Chip>{f.type}</Chip>
+              <Chip>{foodType(f.type).label}</Chip>
             </button>
           ))}
         </Card>
@@ -51,7 +52,7 @@ function FoodSheet({ food, onClose }: { food: Partial<FoodProfile>; onClose: () 
     <Sheet open onClose={onClose} title={food.id ? 'Edit food' : 'New food'}>
       <form onSubmit={submit} className="grid grid-cols-2 gap-3">
         <Field label="Brand"><Input value={f.brand} onChange={e => setF(s => ({ ...s, brand: e.target.value }))} /></Field>
-        <Field label="Type"><Select value={f.type} onChange={e => setF(s => ({ ...s, type: e.target.value }))}>{['dry', 'wet', 'raw', 'treat', 'prescription', 'other'].map(t => <option key={t}>{t}</option>)}</Select></Field>
+        <Field label="Type"><Select value={f.type} onChange={e => setF(s => ({ ...s, type: e.target.value }))}>{FOOD_TYPES.map(t => <option key={t.code} value={t.code}>{t.label}</option>)}</Select></Field>
         <Field label="Product" className="col-span-2"><Input value={f.product} onChange={e => setF(s => ({ ...s, product: e.target.value }))} autoFocus /></Field>
         <Field label="kcal / 100 g"><Input type="number" inputMode="decimal" value={f.kcal_per_100g} onChange={e => setF(s => ({ ...s, kcal_per_100g: e.target.value }))} /></Field>
         <Field label="Serving (g)"><Input type="number" inputMode="decimal" value={f.serving_size_g} onChange={e => setF(s => ({ ...s, serving_size_g: e.target.value }))} /></Field>

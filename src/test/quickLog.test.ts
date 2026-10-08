@@ -17,8 +17,12 @@ describe('buildFields', () => {
     const r = buildFields('symptom', { symptom: ' Sneezing ' })
     if ('row' in r) { expect(r.row.symptom).toBe('Sneezing'); expect(r.row.severity).toBe('mild') }
   })
-  it('keeps feeding free text when no food profile chosen', () => {
-    const r = buildFields('feeding', { food_name: 'Tuna', amount: '40', unit: 'g' })
-    if ('row' in r) { expect(r.row.food_id).toBeNull(); expect(r.row.amount).toBe(40); expect(r.row.unit).toBe('g') }
+  it('names a meal by its type when no product is chosen', () => {
+    const r = buildFields('feeding', { food_type: 'wet', amount: '1' })
+    expect(r).toMatchObject({ row: { food_id: null, food_name: 'Wet food', amount: 1, unit: 'pouch' } })
+  })
+  it('names a meal by the chosen product', () => {
+    const r = buildFields('feeding', { food_type: 'supplement', food_id: 'f1', food_name: 'Salmon oil' })
+    expect(r).toMatchObject({ row: { food_id: 'f1', food_name: 'Salmon oil', amount: null, unit: null } })
   })
 })

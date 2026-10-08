@@ -86,7 +86,7 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
   ) : undefined
   return (
     <Sheet open={open} onClose={onClose} title="Log care" footer={footer}>
-      {!canEdit ? <p className="pb-4 text-sm text-stone-600">Viewers can't log. Ask the household owner for caregiver access.</p> : (
+      {!canEdit ? <p className="pb-4 text-sm text-stone-600">Viewers can't log</p> : (
         <div className="space-y-4">
           <div className="grid grid-cols-5 gap-1.5">
             {KINDS.map(k => (

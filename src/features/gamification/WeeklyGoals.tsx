@@ -1,7 +1,7 @@
 import { Card, ProgressBar, SectionTitle, cx } from '../../components/ui'
 import type { WeeklyQuest } from '../../lib/types'
 import { useWeeklyQuests } from './api'
-import { IconTile, CareTile, Check } from '../../components/icons'
+import { IconTile, CareTile, G } from '../../components/icons'
 
 /** Per-cat weekly goals. On Home every cat is listed; on a profile pass catId. */
 
@@ -25,7 +25,7 @@ export function WeeklyGoals({ hid, catId }: { hid: string; catId?: string }) {
             <ul className="divide-y divide-stone-100">
               {list.map(g => (
                 <li key={g.quest_code} className="flex items-center gap-3 px-4 py-2.5">
-                  {met(g) ? <IconTile icon={Check} tone="emerald" size="sm" /> : <CareTile kind={QUEST_KIND[g.quest_code] ?? 'care_task'} size="sm" />}
+                  {met(g) ? <IconTile icon={G.check} tone="emerald" size="sm" /> : <CareTile kind={QUEST_KIND[g.quest_code] ?? 'care_task'} size="sm" />}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className={cx('truncate text-sm font-medium', met(g) && 'text-stone-400')}>{g.title}</span>
@@ -40,7 +40,6 @@ export function WeeklyGoals({ hid, catId }: { hid: string; catId?: string }) {
           </Card>
         ))}
       </div>
-      <p className="mt-1 text-[11px] text-stone-400">Goals reset every Monday. A missed week simply starts fresh.</p>
     </section>
   )
 }

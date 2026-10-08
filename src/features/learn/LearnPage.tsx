@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { CaretRight, Search, BookOpen, IconTile, TOPIC } from '../../components/icons'
+import { CaretRight, Search, G } from '../../components/icons'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { Card, Chip, EmptyState, ErrorNote, Input, Spinner, cx } from '../../components/ui'
 import { dateLabel } from '../../lib/format'
 import { friendlyError } from '../../lib/errors'
 import { useArticle, useArticles, type Article } from '../tips/api'
 import { parseInline, parseMarkdown, type Block } from './markdown'
+import { TopicArt } from './illustrations'
 
 export const CATEGORIES: Array<{ code: string; label: string }> = [
   { code: 'food', label: 'Food' },
@@ -36,7 +37,7 @@ export function LearnPage() {
 
   return (
     <div>
-      <PageHeader title="Learn" subtitle="Practical cat care, with sources" back="/more" />
+      <PageHeader title="Learn" back="/more" />
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
         <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search articles" className="pl-9" aria-label="Search articles" />
@@ -49,14 +50,13 @@ export function LearnPage() {
       </div>
 
       {articles.isLoading ? <Spinner className="py-10" /> : articles.error ? <ErrorNote message={friendlyError(articles.error)} />
-        : list.length === 0 ? <EmptyState icon={BookOpen} title="No articles found" body={q ? 'Try another word.' : undefined} />
+        : list.length === 0 ? <EmptyState icon={G.book} title="No articles found" />
         : (
           <div className="mt-4 space-y-3">
             {urgent.map(a => <ArticleRow key={a.slug} a={a} />)}
             {rest.map(a => <ArticleRow key={a.slug} a={a} />)}
           </div>
         )}
-      <p className="mt-6 text-center text-[11px] text-stone-400">General information, not veterinary advice.</p>
     </div>
   )
 }
@@ -75,7 +75,7 @@ function ArticleRow({ a }: { a: Article }) {
   return (
     <Link to={`/learn/${a.slug}`} className="block">
       <Card className={cx('flex items-center gap-3', a.urgent && 'bg-red-50/60 ring-red-100')}>
-        <IconTile icon={(TOPIC[a.category] ?? TOPIC.health).icon} tone={(TOPIC[a.category] ?? TOPIC.health).tone} size="lg" />
+        <div className="h-16 w-20 shrink-0 overflow-hidden rounded-2xl ring-1 ring-stone-200/70"><TopicArt topic={a.category} crop className="h-full w-full" /></div>
         <div className="min-w-0 flex-1">
           <div className="font-semibold leading-snug">{a.title}</div>
           <div className="mt-0.5 line-clamp-2 text-sm text-stone-500">{a.summary}</div>
@@ -109,15 +109,15 @@ export function ArticlePage() {
   const blocks = useMemo(() => (a ? parseMarkdown(a.body_md) : []), [a])
   if (isLoading) return <Spinner className="py-10" />
   if (error) return <ErrorNote message={friendlyError(error)} />
-  if (!a) return <div><PageHeader title="Learn" back="/learn" /><EmptyState icon={BookOpen} title="Article not found" /></div>
+  if (!a) return <div><PageHeader title="Learn" back="/learn" /><EmptyState icon={G.book} title="Article not found" /></div>
   const c = categoryOf(a.category)
   const related = (all.data ?? []).filter(x => x.category === a.category && x.slug !== a.slug).slice(0, 2)
 
   return (
     <article>
       <PageHeader title={c?.label ?? 'Learn'} back={`/learn${c ? `?c=${c.code}` : ''}`} />
-      <IconTile icon={(TOPIC[a.category] ?? TOPIC.health).icon} tone={(TOPIC[a.category] ?? TOPIC.health).tone} size="xl" />
-      <h1 className="mt-2 text-2xl font-black leading-tight">{a.title}</h1>
+      <div className="overflow-hidden rounded-3xl ring-1 ring-stone-200/70"><TopicArt topic={a.category} className="block h-auto w-full" /></div>
+      <h1 className="mt-4 text-2xl font-black leading-tight">{a.title}</h1>
       <div className="mt-2 flex flex-wrap gap-2">
         {a.urgent && <Chip tone="bad">Urgent</Chip>}
         <Chip>{a.read_minutes} min read</Chip>
@@ -130,7 +130,7 @@ export function ArticlePage() {
         <ul className="mt-2 space-y-1.5 text-sm">
           {a.sources.map(s => <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer" className="text-paw-700 underline decoration-paw-200 underline-offset-2">{s.name}</a></li>)}
         </ul>
-        <p className="mt-3 text-[11px] text-stone-400">Reviewed {dateLabel(a.reviewed)}. General information, not veterinary advice. If your cat seems unwell, contact your veterinarian.</p>
+        <p className="mt-3 text-[11px] text-stone-400">Reviewed {dateLabel(a.reviewed)}</p>
       </Card>
 
       {related.length > 0 && (

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Cat } from '../../components/icons'
+import { Plus, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, EmptyState, Spinner, cx } from '../../components/ui'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -19,7 +19,7 @@ export function CatsPage() {
       <PageHeader title="Cats" subtitle={`${active.length} in ${current!.name}`}
         action={canEdit && <Link to="/cats/new"><Button className="px-3"><Plus className="h-4 w-4" />Add</Button></Link>} />
       {active.length === 0 ? (
-        <EmptyState icon={Cat} title="No cats yet" body="Add the first member of your cat family." action={canEdit && <Link to="/cats/new"><Button>Add a cat</Button></Link>} />
+        <EmptyState icon={G.cat} title="No cats yet" action={canEdit && <Link to="/cats/new"><Button>Add a cat</Button></Link>} />
       ) : (
         <div className="grid grid-cols-2 gap-3">{active.map(c => <CatTile key={c.cat_id} cat={c} />)}</div>
       )}

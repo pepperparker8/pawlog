@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CaretRight, X, IconTile, Info, Lightbulb } from '../../components/icons'
+import { CaretRight, X, IconTile, G } from '../../components/icons'
 import { Card, SectionTitle, cx } from '../../components/ui'
 import { useCatTips, useHomeTip } from './api'
 import type { CareTip } from './engine'
@@ -17,7 +17,7 @@ function TipBlock({ tip, label, tone, onDismiss, action }: { tip: CareTip; label
   return (
     <Card className={cx('relative', tone === 'hint' && 'bg-amber-50/60 ring-amber-100', tone === 'breed' && 'bg-paw-50/70 ring-paw-100')}>
       <div className="flex items-start gap-3">
-        <IconTile icon={tone === 'hint' ? Info : Lightbulb} tone={tone === 'hint' ? 'amber' : tone === 'breed' ? 'paw' : 'sky'} size="sm" />
+        <IconTile icon={tone === 'hint' ? G.info : G.mind} tone={tone === 'hint' ? 'amber' : tone === 'breed' ? 'paw' : 'sky'} size="sm" />
         <div className="min-w-0 flex-1 pr-6">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">{label}</div>
           <div className="mt-0.5 font-semibold leading-snug">{tip.title}</div>

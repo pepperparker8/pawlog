@@ -11,7 +11,7 @@ import { friendlyError } from '../../lib/errors'
 import { useArticles } from '../tips/api'
 import { useCatSummaries } from '../cats/api'
 import type { SearchHit } from '../../lib/types'
-import { Search, CareTile, IconTile, TOPIC } from '../../components/icons'
+import { CareTile, IconTile, TOPIC, G } from '../../components/icons'
 
 export function useSearch(hid: string, q: string) {
   return useQuery({
@@ -46,10 +46,10 @@ export function SearchPage() {
       <PageHeader title="Search" back />
       <Input type="search" aria-label="Search logs, notes and care guides" value={text} onChange={e => setText(e.target.value)} placeholder="vomiting, Luna, eye drops, tuna…" autoFocus />
       <div className="mt-3 space-y-4">
-        {!ready ? <p className="text-center text-sm text-stone-400">Search logs, notes, foods and care guides.</p>
+        {!ready ? null
           : r.isLoading ? <Spinner />
           : r.error ? <ErrorNote message={friendlyError(r.error)} />
-          : nothing ? <EmptyState icon={Search} title="No matches" body="Try a symptom, a food, a cat's name or a note." />
+          : nothing ? <EmptyState icon={G.search} title="No matches" />
           : null}
         {ready && !!r.data?.length && (
           <section>

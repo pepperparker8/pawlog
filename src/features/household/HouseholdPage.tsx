@@ -116,7 +116,6 @@ export function HouseholdPage() {
           <Field label="Role" hint={ROLE_HELP[role]}><Select value={role} onChange={e => setRole(e.target.value as HouseholdRole)}><option value="caregiver">Caregiver</option><option value="viewer">Viewer</option><option value="owner">Owner</option></Select></Field>
           <ErrorNote message={error} />
           <Button type="submit" className="w-full" loading={createInvite.isPending}>Create invite link</Button>
-          <p className="text-xs text-stone-500">Share the link. They must sign in with the same email, then open it.</p>
         </form>
       </Sheet>
       <Sheet open={newOpen} onClose={() => setNewOpen(false)} title="New household">

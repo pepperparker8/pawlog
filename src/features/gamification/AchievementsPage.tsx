@@ -48,7 +48,7 @@ export function AchievementsPage() {
               <span className="text-xs text-stone-500">{ago(x.created_at)}</span>
               <span className={`ml-3 font-bold ${x.xp > 0 ? 'text-paw-600' : 'text-stone-400'}`}>+{x.xp}</span>
             </div>
-          )) : <p className="px-4 py-6 text-center text-sm text-stone-500">Log something to start earning XP.</p>}
+          )) : <p className="px-4 py-6 text-center text-sm text-stone-500">No XP yet</p>}
         </Card>
       </section>
       <section>
@@ -62,7 +62,6 @@ export function AchievementsPage() {
             </div>
           ))}
         </Card>
-        <p className="mt-2 text-xs text-stone-500">XP rewards care actions, never a cat's weight or health. After the daily full-XP count, each extra log of the same kind earns half the one before, so logging more than needed adds little.</p>
       </section>
       <section>
         <SectionTitle>Levels</SectionTitle>

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, Search, CareTile, CareGlyph, IconTile, Check } from '../../components/icons'
+import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, CareTile, CareGlyph, IconTile, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, EmptyState, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -46,7 +46,7 @@ export function CatProfilePage() {
   const nav = useNavigate()
 
   if (cat.isLoading || foreign) return <Spinner />
-  if (!cat.data) return <EmptyState icon={Search} title="Cat not found" body="It may belong to another household." action={<Link to="/cats"><Button variant="secondary">Back to cats</Button></Link>} />
+  if (!cat.data) return <EmptyState icon={G.search} title="Cat not found" action={<Link to="/cats"><Button variant="secondary">Back to cats</Button></Link>} />
   const c = cat.data
   const live = canEdit && !c.archived_at && !c.deceased_on
   const sexLabel = c.sex === 'male' ? 'Male' : c.sex === 'female' ? 'Female' : null
@@ -241,7 +241,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
       <section>
         <SectionTitle action={<Link to={`/cats/${id}/timeline`} replace className="flex items-center text-xs font-semibold text-paw-600">All<CaretRight className="h-3.5 w-3.5" /></Link>}>Recent</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">
-          {recent.isLoading ? <Spinner className="py-6" /> : events.length === 0 ? <p className="px-4 py-5 text-center text-sm text-stone-400">Nothing logged yet. Tap a quick action above to start.</p> : events.map(e => (
+          {recent.isLoading ? <Spinner className="py-6" /> : events.length === 0 ? <p className="px-4 py-5 text-center text-sm text-stone-400">Nothing logged yet</p> : events.map(e => (
             <div key={e.id} className="flex items-center gap-3 px-4 py-2.5">
               <CareTile kind={e.kind} size="sm" />
               <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{e.title}</div>{e.detail && <div className="truncate text-xs text-stone-500">{e.detail}</div>}</div>
@@ -257,7 +257,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
 function TodayRow({ kind, label, done, detail, action, actionLabel = 'Log' }: { kind: string; label: string; done: boolean; detail: string; action?: () => void; actionLabel?: string }) {
   return (
     <div className="flex min-h-14 items-center gap-3 px-4 py-2">
-      {done ? <IconTile icon={Check} tone="emerald" size="sm" className="h-9 w-9" /> : <CareTile kind={kind} size="sm" className="h-9 w-9" />}
+      {done ? <IconTile icon={G.check} tone="emerald" size="sm" className="h-9 w-9" /> : <CareTile kind={kind} size="sm" className="h-9 w-9" />}
       <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{label}</div><div className="truncate text-xs text-stone-500">{detail}</div></div>
       {action ? <button onClick={action} className="rounded-full bg-paw-500 px-3.5 py-1.5 text-xs font-semibold text-white active:scale-95">{actionLabel}</button>
         : done ? <Chip tone="ok">Done</Chip> : null}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Trash, History, CareTile, Search } from '../../components/icons'
+import { Trash, CareTile, Search, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries } from '../cats/api'
 import { Button, Card, EmptyState, Select, Spinner, cx } from '../../components/ui'
@@ -46,7 +46,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
 
   return (
     <div>
-      {!embedded && <PageHeader title="Timeline" subtitle="Everything, in order" action={<Link to="/more/search" aria-label="Search" className="rounded-full p-2.5 text-stone-600 hover:bg-stone-100"><Search size={22} /></Link>} />}
+      {!embedded && <PageHeader title="Timeline" action={<Link to="/more/search" aria-label="Search" className="rounded-full p-2.5 text-stone-600 hover:bg-stone-100"><Search size={22} /></Link>} />}
       <div className="mb-3 flex gap-2">
         {!catId && (
           <Select value={cat} onChange={e => setCat(e.target.value)} className="w-auto flex-1 py-2 text-sm">
@@ -61,7 +61,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
         ))}
       </div>
       {q.isLoading ? <Spinner /> : events.length === 0 ? (
-        <EmptyState icon={History} title="Nothing here yet" body="Tap + to log a meal, a weigh-in or a moment. The story starts with one entry." />
+        <EmptyState icon={G.history} title="Nothing here yet" />
       ) : (
         <div className="space-y-4">
           {byDay.map(([day, items]) => (

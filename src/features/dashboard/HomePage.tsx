@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Warning, Eye, Info, Sparkle, Cat, CareTile, CareGlyph, Check } from '../../components/icons'
+import { Warning, Eye, Info, Sparkle, CareTile, CareGlyph, Check, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
@@ -36,7 +36,7 @@ export function HomePage() {
     return (
       <div>
         <h1 className="mb-2 text-2xl font-black">{current!.name}</h1>
-        <EmptyState icon={Cat} title="No cats yet" body="Add your first cat, or load a demo household to look around."
+        <EmptyState icon={G.cat} title="No cats yet"
           action={canEdit && (
             <div className="flex flex-col gap-2">
               <Link to="/cats/new"><Button className="w-full">Add a cat</Button></Link>
@@ -102,7 +102,6 @@ export function HomePage() {
               </Card>
             )}
           </div>
-          <p className="mt-1 text-[11px] text-stone-400">Patterns are simple comparisons of your own logs, not a diagnosis. Talk to your vet when something worries you.</p>
         </section>
       )}
 

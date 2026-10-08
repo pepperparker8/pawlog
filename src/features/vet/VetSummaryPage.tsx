@@ -115,7 +115,6 @@ function Summary({ catId, days, hid }: { catId: string; days: number; hid: strin
           <ul className="space-y-2 text-sm">
             {catPatterns.map(p => <li key={p.code}><b>{p.title}</b><span className="block text-stone-600">{p.detail}</span></li>)}
           </ul>
-          <p className="mt-2 text-xs text-stone-500">Repeated entries in your logs, worth mentioning at the visit.</p>
         </Card>
       )}
 
@@ -185,7 +184,6 @@ function Summary({ catId, days, hid }: { catId: string; days: number; hid: strin
       </Card>
 
       {events.length >= MAX_ROWS && <p className="text-xs text-amber-700">Showing the first {MAX_ROWS} entries. Choose a shorter period for a complete list.</p>}
-      <p className="text-[11px] text-stone-500">Owner-logged observations only. Not a diagnosis.</p>
     </div>
   )
 }

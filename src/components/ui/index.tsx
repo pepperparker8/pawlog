@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import { CircleNotch, X, Cat, IconTile, type Icon, type Tone } from '../icons'
+import { CircleNotch, X, G, IconTile, type Glyph, type Icon, type Tone } from '../icons'
 
 function cx(...c: Array<string | false | null | undefined>) { return c.filter(Boolean).join(' ') }
 
@@ -68,7 +68,7 @@ export function ErrorNote({ message }: { message: string | null | undefined }) {
   return <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
 }
 
-export function EmptyState({ icon = Cat, tone = 'paw', title, body, action }: { icon?: Icon; tone?: Tone; title: string; body?: string; action?: ReactNode }) {
+export function EmptyState({ icon = G.cat, tone = 'paw', title, body, action }: { icon?: Glyph | Icon; tone?: Tone; title: string; body?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
       <IconTile icon={icon} tone={tone} size="xl" className="mb-2" />

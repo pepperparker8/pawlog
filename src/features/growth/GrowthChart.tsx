@@ -7,7 +7,7 @@ import { kg, dateLabel, signedKg } from '../../lib/format'
 import { useWeightStatus } from '../weight/api'
 import { WeightStatusCard } from '../weight/WeightStatusCard'
 import { weightInsights } from './insights'
-import { Scales, Clipboard, CalendarCheck, Sprout, Target, Star, type Icon } from '../../components/icons'
+import { Scales, Clipboard, CalendarCheck, Sprout, Target, Star, type Icon, G } from '../../components/icons'
 
 const RANGES = [{ label: '1M', days: 30 }, { label: '3M', days: 90 }, { label: '1Y', days: 365 }, { label: 'All', days: 0 }]
 
@@ -30,7 +30,7 @@ export function GrowthChart({ catId }: { catId: string }) {
   }, [w.data, weekly.data, range])
 
   if (w.isLoading) return <Spinner />
-  if (!w.data?.length) return <EmptyState icon={Scales} title="No weigh-ins yet" body="Log a weight and the growth curve starts here." />
+  if (!w.data?.length) return <EmptyState icon={G.weight} title="No weigh-ins yet" />
 
   const last = w.data[w.data.length - 1]
   const prev = w.data.length > 1 ? w.data[w.data.length - 2] : null

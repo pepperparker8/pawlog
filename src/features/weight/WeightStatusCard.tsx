@@ -101,7 +101,7 @@ function TargetSheet({ catId, targets, onClose }: { catId: string; targets: Weig
         <Field label="Ideal (kg, optional)"><Input inputMode="decimal" value={f.ideal} onChange={e => setF({ ...f, ideal: e.target.value })} /></Field>
         <Field label="Set on"><Input type="date" value={f.set_on} onChange={e => setF({ ...f, set_on: e.target.value })} /></Field>
         <Field label="Note" className="col-span-2"><Textarea value={f.note} onChange={e => setF({ ...f, note: e.target.value })} /></Field>
-        <p className="col-span-2 text-xs text-stone-500">A vet target counts first, then your own goal, then the breed reference. {existing ? `Current ${source} target set ${dateLabel(existing.set_on)}.` : ''}</p>
+        {existing && <p className="col-span-2 text-xs text-stone-500">Current: {source} target · {dateLabel(existing.set_on)}</p>}
         <div className="col-span-2"><ErrorNote message={error} /></div>
       </form>
     </Sheet>

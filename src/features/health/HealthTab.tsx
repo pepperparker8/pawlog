@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { CaretRight, Check, Clipboard, IconTile, Plus, Trash } from '../../components/icons'
+import { CaretRight, Check, IconTile, Plus, Trash, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Sheet, Spinner, Textarea } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -46,14 +46,12 @@ export function HealthTab({ catId }: { catId: string }) {
   return (
     <div className="space-y-5">
       <Link to={`/more/vet-summary?cat=${catId}`} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/70 active:bg-stone-50">
-        <IconTile icon={Clipboard} tone="sky" />
+        <IconTile icon={G.clipboard} tone="sky" />
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold">Prepare a vet summary</div>
-          <div className="text-xs text-stone-500">Symptoms, appetite, weight and medications in one page</div>
+          <div className="text-sm font-semibold">Vet summary</div>
         </div>
         <CaretRight className="h-4 w-4 text-stone-400" />
       </Link>
-      <p className="text-xs text-stone-500">Records for your vet conversations. PawLog does not diagnose.</p>
       <section>
         <SectionTitle action={add('cat_medications')}>Medications</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">

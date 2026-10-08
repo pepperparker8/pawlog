@@ -20,7 +20,7 @@ import { startQueueSync } from './lib/offlineQueue'
 import { useCreateHousehold } from './features/household/api'
 import { friendlyError } from './lib/errors'
 import { rememberReturnPath, takeReturnPath } from './lib/appUrl'
-import { House } from './components/icons'
+import { G } from './components/icons'
 
 const CarePage = lazy(() => import('./features/care/CarePage').then(x => ({ default: x.CarePage })))
 const FoodsPage = lazy(() => import('./features/care/FoodsPage').then(x => ({ default: x.FoodsPage })))
@@ -112,7 +112,7 @@ function CreateFirstHousehold() {
   }
   return (
     <div className="mx-auto max-w-sm px-6 py-16">
-      <EmptyState icon={House} title="Name your household" body="A household is the shared space for your cats and the people who care for them." />
+      <EmptyState icon={G.home} title="Name your household" />
       <form onSubmit={submit} className="space-y-3">
         <Field label="Household name"><Input value={name} onChange={e => setName(e.target.value)} autoFocus /></Field>
         <ErrorNote message={error} />

@@ -20,7 +20,7 @@ export function AppShell() {
   const hideNav = pathname.startsWith('/log')
   return (
     <div className="mx-auto flex min-h-full max-w-2xl flex-col">
-      {!online && <div className="bg-stone-800 px-4 py-1 text-center text-xs text-white">Offline. Logs are queued and will sync.</div>}
+      {!online && <div className="bg-stone-800 px-4 py-1 text-center text-xs text-white">Offline</div>}
       <main className="flex-1 px-4 pb-28 pt-4"><Suspense fallback={<Spinner className="py-16" />}><Outlet /></Suspense></main>
       {!hideNav && (
         <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-stone-200 bg-white/95 backdrop-blur">

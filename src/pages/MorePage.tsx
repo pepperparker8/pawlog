@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, Bell, Bowl, CalendarCheck, Camera, CaretRight, Clipboard, House, IconTile, SignOut, Search, Trophy, Users, type Icon, type Tone } from '../components/icons'
+import { CaretRight, G, House, IconTile, SignOut, type Glyph, type Tone } from '../components/icons'
 import { useAuth } from '../auth/AuthProvider'
 import { useHousehold } from '../household/HouseholdProvider'
 import { Card } from '../components/ui'
@@ -13,16 +13,16 @@ export function MorePage() {
   const notif = useNotifications(user!.id)
   const unread = notif.data?.filter(n => !n.read_at).length ?? 0
 
-  const items: Array<{ to: string; icon: Icon; tone: Tone; label: string; badge?: number }> = [
-    { to: '/more/care', icon: CalendarCheck, tone: 'emerald', label: 'Care schedule' },
-    { to: '/more/vet-summary', icon: Clipboard, tone: 'sky', label: 'Vet summary' },
-    { to: '/more/notifications', icon: Bell, tone: 'amber', label: 'Notifications', badge: unread },
-    { to: '/more/search', icon: Search, tone: 'stone', label: 'Search' },
-    { to: '/more/photos', icon: Camera, tone: 'rose', label: 'Photo memories' },
-    { to: '/more/foods', icon: Bowl, tone: 'paw', label: 'Food profiles' },
-    { to: '/learn', icon: BookOpen, tone: 'violet', label: 'Learn: care guides' },
-    { to: '/more/achievements', icon: Trophy, tone: 'paw', label: 'Achievements & XP' },
-    { to: '/more/household', icon: Users, tone: 'stone', label: 'Household & members' },
+  const items: Array<{ to: string; icon: Glyph; tone: Tone; label: string; badge?: number }> = [
+    { to: '/more/care', icon: G.care_task, tone: 'emerald', label: 'Care schedule' },
+    { to: '/more/vet-summary', icon: G.clipboard, tone: 'sky', label: 'Vet summary' },
+    { to: '/more/notifications', icon: G.bell, tone: 'amber', label: 'Notifications', badge: unread },
+    { to: '/more/search', icon: G.search, tone: 'stone', label: 'Search' },
+    { to: '/more/photos', icon: G.photo, tone: 'rose', label: 'Photo memories' },
+    { to: '/more/foods', icon: G.feeding, tone: 'paw', label: 'Food profiles' },
+    { to: '/learn', icon: G.book, tone: 'violet', label: 'Learn: care guides' },
+    { to: '/more/achievements', icon: G.milestone, tone: 'paw', label: 'Achievements & XP' },
+    { to: '/more/household', icon: G.users, tone: 'stone', label: 'Household & members' },
   ]
 
   return (

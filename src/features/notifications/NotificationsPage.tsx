@@ -4,7 +4,7 @@ import { Button, Card, EmptyState, Spinner, cx } from '../../components/ui'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { ago } from '../../lib/format'
 import { useMarkRead, useNotifications } from './api'
-import { Bell, IconTile, NOTICE } from '../../components/icons'
+import { IconTile, NOTICE, G } from '../../components/icons'
 
 
 export function NotificationsPage() {
@@ -15,7 +15,7 @@ export function NotificationsPage() {
   return (
     <div>
       <PageHeader title="Notifications" back="/more" action={unread > 0 && <Button variant="ghost" className="text-xs" onClick={() => mark.mutate('all')}>Mark all read</Button>} />
-      {q.isLoading ? <Spinner /> : !q.data?.length ? <EmptyState icon={Bell} title="All quiet" body="Level-ups, badges, reminders and household activity land here." /> : (
+      {q.isLoading ? <Spinner /> : !q.data?.length ? <EmptyState icon={G.bell} title="All quiet" /> : (
         <Card className="divide-y divide-stone-100 p-0">
           {q.data.map(n => {
             const inner = (

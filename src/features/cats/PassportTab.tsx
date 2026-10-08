@@ -44,7 +44,7 @@ export function PassportTab({ cat }: { cat: Cat }) {
           <div key={m.id} className="border-t border-stone-100 py-1.5 text-sm first:border-0"><b>{m.name}</b> {m.dose} {m.frequency && `· ${m.frequency}`} {!m.active && <span className="text-xs text-stone-400">(ended)</span>}{m.reason && <div className="text-xs text-stone-500">{m.reason}</div>}</div>
         )) : <p className="text-sm text-stone-500">No medications.</p>}
       </Card>
-      <p className="text-[11px] text-stone-400 print:block">Generated from PawLog on {dateLabel(new Date().toISOString())}. Owner-maintained records, not a veterinary document.</p>
+      <p className="text-[11px] text-stone-400 print:block">PawLog · {dateLabel(new Date().toISOString())}</p>
     </div>
   )
 }

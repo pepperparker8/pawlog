@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Check, Plus, CalendarCheck } from '../../components/icons'
+import { Check, Plus, G } from '../../components/icons'
 import { useAuth } from '../../auth/AuthProvider'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ErrorNote, Field, Input, Select, Sheet, Spinner, cx } from '../../components/ui'
@@ -51,7 +51,7 @@ export function CarePage() {
     <div>
       <PageHeader title="Care schedule" back="/more" action={canEdit && <Button className="px-3" onClick={() => setEditing({})}><Plus className="h-4 w-4" />Task</Button>} />
       {tasks.isLoading ? <Spinner /> : !tasks.data?.length ? (
-        <EmptyState icon={CalendarCheck} title="No recurring tasks yet" body="Nail trims, litter box cleans, parasite prevention. Set the rhythm once and PawLog reminds you when each is due." action={canEdit && <Button onClick={() => setEditing({})}>Add a task</Button>} />
+        <EmptyState icon={G.care_task} title="No recurring tasks yet" action={canEdit && <Button onClick={() => setEditing({})}>Add a task</Button>} />
       ) : groups.map(g => {
         const items = tasks.data!.filter(g.f)
         if (!items.length) return null

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { differenceInDays, differenceInMonths } from 'date-fns'
-import { Camera, Heart, CircleNotch, Star, Trash, X } from '../../components/icons'
+import { Camera, Heart, CircleNotch, Star, Trash, X, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, EmptyState, ErrorNote, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -27,7 +27,7 @@ export function PhotoGrid({ catId }: { catId?: string }) {
         </PhotoPicker>
       )}
       {q.error ? <ErrorNote message={friendlyError(q.error)} /> : q.isLoading ? <Spinner /> : photos.length === 0 ? (
-        <EmptyState icon={Camera} title="No photos yet" body="Photos land on the timeline and come back as On this day memories." />
+        <EmptyState icon={G.photo} title="No photos yet" />
       ) : (
         <>
           {catId && <ThenAndNow catId={catId} photos={photos} onOpen={setOpen} />}

@@ -25,3 +25,16 @@ body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
 @keyframes celebrate { 0% { transform: scale(.6); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }
 .animate-celebrate { animation: celebrate .35s ease-out; }
 @media (prefers-reduced-motion: reduce) { .animate-pop, .animate-sheet, .animate-celebrate { animation: none; } }
+
+/* Glyph tints: soft fill and accent per tile tone (components/glyphs.tsx). */
+.g-s { fill: var(--g-soft, color-mix(in srgb, currentColor 20%, #fff)); }
+.g-a { fill: var(--g-accent, #fb923c); }
+.g-as { stroke: var(--g-accent, #fb923c); }
+.g-w { fill: #fff; }
+.tone-paw { --g-soft: #fed7aa; --g-accent: #fcd34d; }
+.tone-sky { --g-soft: #bae6fd; --g-accent: #fb923c; }
+.tone-emerald { --g-soft: #a7f3d0; --g-accent: #fcd34d; }
+.tone-violet { --g-soft: #ddd6fe; --g-accent: #fda4af; }
+.tone-rose { --g-soft: #fecdd3; --g-accent: #fcd34d; }
+.tone-amber { --g-soft: #fde68a; --g-accent: #fb923c; }
+.tone-stone { --g-soft: #e7e5e4; --g-accent: #fb923c; }

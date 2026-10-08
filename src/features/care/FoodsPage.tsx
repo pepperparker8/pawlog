@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { Plus, G } from '../../components/icons'
+import { Plus, Trash, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ErrorNote, Field, Input, Select, Sheet, Spinner } from '../../components/ui'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
-import { useFoods, useSaveFood } from './api'
+import { useDeleteFood, useFoods, useSaveFood } from './api'
 import type { FoodProfile } from '../../lib/types'
 import { FOOD_TYPES, foodType } from './foodTypes'
 
@@ -37,6 +37,7 @@ export function FoodsPage() {
 function FoodSheet({ food, onClose }: { food: Partial<FoodProfile>; onClose: () => void }) {
   const { current } = useHousehold()
   const save = useSaveFood(current!.id)
+  const del = useDeleteFood(current!.id)
   const toast = useToast()
   const [f, setF] = useState({ brand: food.brand ?? '', product: food.product ?? '', type: food.type ?? 'dry', kcal_per_100g: food.kcal_per_100g?.toString() ?? '', serving_size_g: food.serving_size_g?.toString() ?? '' })
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +49,10 @@ function FoodSheet({ food, onClose }: { food: Partial<FoodProfile>; onClose: () 
       toast.show('Saved'); onClose()
     } catch (err) { setError(friendlyError(err)) }
   }
+  async function remove() {
+    if (!food.id || !confirm(`Delete ${f.product || 'this food'}?`)) return
+    try { await del.mutateAsync(food.id); toast.show('Deleted'); onClose() } catch (err) { setError(friendlyError(err)) }
+  }
   return (
     <Sheet open onClose={onClose} title={food.id ? 'Edit food' : 'New food'}>
       <form onSubmit={submit} className="grid grid-cols-2 gap-3">
@@ -57,7 +62,8 @@ function FoodSheet({ food, onClose }: { food: Partial<FoodProfile>; onClose: () 
         <Field label="kcal / 100 g"><Input type="number" inputMode="decimal" value={f.kcal_per_100g} onChange={e => setF(s => ({ ...s, kcal_per_100g: e.target.value }))} /></Field>
         <Field label="Serving (g)"><Input type="number" inputMode="decimal" value={f.serving_size_g} onChange={e => setF(s => ({ ...s, serving_size_g: e.target.value }))} /></Field>
         <ErrorNote message={error} />
-        <Button type="submit" className="col-span-2" loading={save.isPending}>Save</Button>
+        <Button type="submit" className={food.id ? '' : 'col-span-2'} loading={save.isPending}>Save</Button>
+        {food.id && <Button type="button" variant="danger" loading={del.isPending} onClick={remove}><Trash className="h-4 w-4" />Delete</Button>}
       </form>
     </Sheet>
   )

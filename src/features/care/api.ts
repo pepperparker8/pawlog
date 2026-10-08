@@ -61,3 +61,25 @@ export function useSaveFood(hid: string) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.foods(hid) }),
   })
 }
+
+/** Hides a food from pickers; past meals keep their stored name. */
+export function useDeleteFood(hid: string) {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await untypedDb.from('food_profiles').update({ archived_at: new Date().toISOString() }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.foods(hid) }),
+  })
+}
+
+/** Stops a recurring task; its completions stay in the timeline. */
+export function useDeleteCareTask(hid: string) {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await untypedDb.from('care_tasks').update({ active: false }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => invalidateHousehold(hid),
+  })
+}

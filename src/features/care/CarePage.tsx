@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Check, Plus, G } from '../../components/icons'
+import { Check, Plus, Trash, G } from '../../components/icons'
 import { useAuth } from '../../auth/AuthProvider'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ErrorNote, Field, Input, Select, Sheet, Spinner, cx } from '../../components/ui'
@@ -9,7 +9,7 @@ import { friendlyError } from '../../lib/errors'
 import { dueLabel, todayInput } from '../../lib/format'
 import { useCatSummaries } from '../cats/api'
 import { useMembers } from '../household/api'
-import { useCareTasks, useCompleteCareTask, useSaveCareTask } from './api'
+import { useCareTasks, useCompleteCareTask, useDeleteCareTask, useSaveCareTask } from './api'
 import type { CareTask } from '../../lib/types'
 
 const KINDS: { value: CareTask['kind']; label: string }[] = [
@@ -87,6 +87,7 @@ function TaskSheet({ task, onClose }: { task: Partial<CareTask>; onClose: () => 
   const cats = useCatSummaries(hid)
   const members = useMembers(hid)
   const save = useSaveCareTask(hid)
+  const del = useDeleteCareTask(hid)
   const toast = useToast()
   const [f, setF] = useState({ name: task.name ?? '', kind: task.kind ?? 'custom', cat_id: task.cat_id ?? '', frequency_days: task.frequency_days?.toString() ?? '30',
     next_due_on: task.next_due_on ?? todayInput(), assigned_to: task.assigned_to ?? user!.id, reminder_enabled: task.reminder_enabled ?? true, active: task.active ?? true })
@@ -100,6 +101,10 @@ function TaskSheet({ task, onClose }: { task: Partial<CareTask>; onClose: () => 
         next_due_on: f.next_due_on || null, assigned_to: f.assigned_to || null, reminder_enabled: f.reminder_enabled, active: f.active })
       toast.show('Saved'); onClose()
     } catch (err) { setError(friendlyError(err)) }
+  }
+  async function remove() {
+    if (!task.id || !confirm(`Delete ${f.name || 'this task'}?`)) return
+    try { await del.mutateAsync(task.id); toast.show('Deleted'); onClose() } catch (err) { setError(friendlyError(err)) }
   }
   return (
     <Sheet open onClose={onClose} title={task.id ? 'Edit task' : 'New task'}>
@@ -121,10 +126,10 @@ function TaskSheet({ task, onClose }: { task: Partial<CareTask>; onClose: () => 
         <Field label="Every (days)" hint="Blank = one-off"><Input type="number" inputMode="numeric" min={1} value={f.frequency_days} onChange={e => set('frequency_days', e.target.value)} /></Field>
         <Field label="Next due"><Input type="date" value={f.next_due_on} onChange={e => set('next_due_on', e.target.value)} /></Field>
         <Field label="Assigned to" className="col-span-2"><Select value={f.assigned_to} onChange={e => set('assigned_to', e.target.value)}><option value="">Anyone</option>{members.data?.map(m => <option key={m.user_id} value={m.user_id}>{m.profiles?.display_name ?? m.user_id.slice(0, 8)}</option>)}</Select></Field>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.reminder_enabled} onChange={e => set('reminder_enabled', e.target.checked)} />Remind me</label>
-        {task.id && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.active} onChange={e => set('active', e.target.checked)} />Active</label>}
+        <label className="col-span-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={f.reminder_enabled} onChange={e => set('reminder_enabled', e.target.checked)} />Remind me</label>
         <ErrorNote message={error} />
-        <Button type="submit" className="col-span-2" loading={save.isPending}>Save</Button>
+        <Button type="submit" className={task.id ? '' : 'col-span-2'} loading={save.isPending}>Save</Button>
+        {task.id && <Button type="button" variant="danger" loading={del.isPending} onClick={remove}><Trash className="h-4 w-4" />Delete</Button>}
       </form>
     </Sheet>
   )

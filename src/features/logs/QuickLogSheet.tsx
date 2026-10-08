@@ -4,7 +4,8 @@ import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
 import { Avatar, Button, ErrorNote, Field, Input, Select, Sheet, Textarea, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
-import { fetchAward, useSubmitLog, type LogTable } from './api'
+import { fetchAward, undoLog, useSubmitLog, type LogTable } from './api'
+import { invalidateHousehold } from '../../lib/queryClient'
 import { useFoods } from '../care/api'
 import { FOOD_TYPES, foodType, lastFoodType, rememberFoodType } from '../care/foodTypes'
 import { useMedsToday, type MedToday } from '../health/api'
@@ -74,7 +75,8 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
       else {
         const award = await fetchAward(r.ids)
         const who = selected.length > 1 ? ` for ${selected.length} cats` : ''
-        toast.show(`${meta.done}${who}${award.xp > 0 ? ` · +${award.xp} XP` : award.repeat ? ' · XP already earned for this today' : ''}`, award.xp > 0 ? 'xp' : 'ok')
+        const undo = () => undoLog(meta.table, r.ids).then(() => { invalidateHousehold(hid); toast.show('Removed') }, err => toast.show(friendlyError(err), 'bad'))
+        toast.show(`${meta.done}${who}${award.xp > 0 ? ` · +${award.xp} XP` : award.repeat ? ' · XP already earned for this today' : ''}`, award.xp > 0 ? 'xp' : 'ok', { label: 'Undo', run: () => void undo() })
       }
       onClose()
     } catch (e) { setError(friendlyError(e)) }

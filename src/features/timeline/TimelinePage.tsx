@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Trash, CareTile, Search, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries } from '../cats/api'
-import { Button, Card, EmptyState, Select, Spinner, cx } from '../../components/ui'
+import { Button, Card, EmptyState, Select, Sheet, Spinner, cx } from '../../components/ui'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { KIND_META, useTimeline } from './api'
 import { dayLabel, timeLabel } from '../../lib/format'
@@ -32,6 +32,8 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
   const toast = useToast()
   const events = useMemo(() => q.data?.pages.flat() ?? [], [q.data])
   const catName = (id: string | null) => cats.data?.find(c => c.cat_id === id)?.name
+  const [open, setOpen] = useState<TimelineEvent | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const byDay = useMemo(() => {
     const m = new Map<string, TimelineEvent[]>()
@@ -41,8 +43,12 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
 
   async function remove(e: TimelineEvent) {
     if (!confirm(`Delete this ${KIND_META[e.kind].label.toLowerCase()} entry?`)) return
-    try { await deleteLog(KIND_TO_TABLE[e.kind], e.id); invalidateHousehold(hid); toast.show('Deleted') } catch (err) { toast.show(friendlyError(err), 'bad') }
+    setDeleting(true)
+    try { await deleteLog(KIND_TO_TABLE[e.kind], e.id); invalidateHousehold(hid); toast.show('Deleted'); setOpen(null) }
+    catch (err) { toast.show(friendlyError(err), 'bad') }
+    finally { setDeleting(false) }
   }
+  const deletable = (e: TimelineEvent) => canEdit && e.kind !== 'milestone' && e.kind !== 'care_task'
 
   return (
     <div>
@@ -69,29 +75,43 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
               <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-stone-500">{dayLabel(items[0].occurred_at)}</h3>
               <Card className="divide-y divide-stone-100 p-0">
                 {items.map(e => (
-                  <div key={e.kind + e.id} className="flex items-start gap-3 px-3 py-2.5">
+                  <button key={e.kind + e.id} type="button" onClick={() => setOpen(e)} className="flex w-full items-start gap-3 px-3 py-2.5 text-left active:bg-stone-50">
                     <CareTile kind={e.kind} size="sm" className="mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
                         <span className="truncate text-sm font-medium">{e.title}</span>
-                        {!catId && e.cat_id && <Link to={`/cats/${e.cat_id}`} className="shrink-0 text-xs text-paw-600">{catName(e.cat_id)}</Link>}
+                        {!catId && e.cat_id && <span className="shrink-0 text-xs text-paw-600">{catName(e.cat_id)}</span>}
                       </div>
                       {e.detail && <div className="line-clamp-2 text-xs text-stone-500">{e.detail}</div>}
                       <Detail e={e} />
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs text-stone-400">{timeLabel(e.occurred_at)}</span>
-                      {canEdit && e.kind !== 'milestone' && e.kind !== 'care_task' && (
-                        <button onClick={() => void remove(e)} className="rounded p-1 text-stone-300 hover:text-red-500" aria-label="Delete"><Trash className="h-3.5 w-3.5" /></button>
-                      )}
-                    </div>
-                  </div>
+                    <span className="text-xs text-stone-400">{timeLabel(e.occurred_at)}</span>
+                  </button>
                 ))}
               </Card>
             </section>
           ))}
           {q.hasNextPage && <Button variant="secondary" className="w-full" loading={q.isFetchingNextPage} onClick={() => void q.fetchNextPage()}>Load older</Button>}
         </div>
+      )}
+      {open && (
+        <Sheet open onClose={() => setOpen(null)} title={KIND_META[open.kind].label}
+          footer={deletable(open) ? (
+            <Button variant="danger" className="w-full py-3" loading={deleting} onClick={() => void remove(open)}><Trash className="h-4 w-4" />Delete entry</Button>
+          ) : undefined}>
+          <div className="flex items-start gap-3 pb-4">
+            <CareTile kind={open.kind} size="md" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold">{open.title}</div>
+              <div className="text-sm text-stone-500">
+                {open.cat_id && <Link to={`/cats/${open.cat_id}`} className="font-medium text-paw-600">{catName(open.cat_id)}</Link>}
+                {open.cat_id && ' · '}{dayLabel(open.occurred_at)}, {timeLabel(open.occurred_at)}
+              </div>
+              {open.detail && <p className="mt-2 whitespace-pre-line text-sm text-stone-700">{open.detail}</p>}
+              <Detail e={open} />
+            </div>
+          </div>
+        </Sheet>
       )}
     </div>
   )

@@ -55,6 +55,12 @@ export async function deleteLog(table: string, id: string) {
   if (error) throw error
 }
 
+/** Removes rows just written by submitLog, matched on their client_event_id. */
+export async function undoLog(table: string, eventIds: string[]) {
+  const { error } = await untypedDb.from(table).delete().in('client_event_id', eventIds)
+  if (error) throw error
+}
+
 export const KIND_TO_TABLE: Record<string, string> = {
   weight: 'weight_logs', feeding: 'feeding_logs', water: 'water_logs', litter: 'litter_logs', symptom: 'symptom_logs',
   medication: 'medication_logs', grooming: 'grooming_logs', behavior: 'behavior_logs', activity: 'activity_logs',

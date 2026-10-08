@@ -60,11 +60,11 @@ export function useOnThisDay(hid: string) {
   })
 }
 
-export const KIND_META: Record<TimelineKind, { emoji: string; label: string }> = {
-  weight: { emoji: '⚖️', label: 'Weight' }, feeding: { emoji: '🍽️', label: 'Feeding' }, water: { emoji: '💧', label: 'Water' },
-  litter: { emoji: '🧹', label: 'Litter' }, symptom: { emoji: '🩺', label: 'Symptom' }, medication: { emoji: '💊', label: 'Medication' },
-  grooming: { emoji: '🧼', label: 'Grooming' }, behavior: { emoji: '🐈', label: 'Behavior' }, activity: { emoji: '🧶', label: 'Play' },
-  journal: { emoji: '📓', label: 'Journal' }, photo: { emoji: '📷', label: 'Photo' }, vet_visit: { emoji: '🏥', label: 'Vet visit' },
-  vaccination: { emoji: '💉', label: 'Vaccination' }, parasite: { emoji: '🛡️', label: 'Parasite' }, care_task: { emoji: '✅', label: 'Care task' },
-  milestone: { emoji: '🏆', label: 'Milestone' },
+export const KIND_META: Record<TimelineKind, { label: string }> = {
+  weight: { label: 'Weight' }, feeding: { label: 'Feeding' }, water: { label: 'Water' },
+  litter: { label: 'Litter' }, symptom: { label: 'Symptom' }, medication: { label: 'Medication' },
+  grooming: { label: 'Grooming' }, behavior: { label: 'Behavior' }, activity: { label: 'Play' },
+  journal: { label: 'Journal' }, photo: { label: 'Photo' }, vet_visit: { label: 'Vet visit' },
+  vaccination: { label: 'Vaccination' }, parasite: { label: 'Parasite' }, care_task: { label: 'Care task' },
+  milestone: { label: 'Milestone' },
 }

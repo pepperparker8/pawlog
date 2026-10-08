@@ -1,13 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, ChevronRight, Loader2, Pencil } from 'lucide-react'
+import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, Search, CareTile, CareGlyph, IconTile, Check } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, EmptyState, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
 import { useCat, useCatSummaries, useSignedUrl } from './api'
 import { TimelinePage } from '../timeline/TimelinePage'
-import { useTimeline, KIND_META } from '../timeline/api'
-import { GrowthChart } from '../growth/GrowthChart'
+import { useTimeline } from '../timeline/api'
 import { HealthTab } from '../health/HealthTab'
 import { useGiveDose, useMedsToday } from '../health/api'
 import { PhotoGrid } from '../photos/PhotoGrid'
@@ -21,18 +20,23 @@ import { ago, catAge, courseDay, dueLabel, isTodayIso, kg, timeLabel } from '../
 import { friendlyError } from '../../lib/errors'
 import type { CatSummary } from '../../lib/types'
 
+const GrowthChart = lazy(() => import('../growth/GrowthChart').then(m => ({ default: m.GrowthChart })))
+
 const TABS = [['', 'Overview'], ['health', 'Health'], ['growth', 'Growth'], ['photos', 'Photos'], ['timeline', 'Timeline'], ['passport', 'Passport']] as const
-const ACTIONS: Array<{ kind: Kind; emoji: string; label: string }> = [
-  { kind: 'feeding', emoji: '🍽️', label: 'Feed' }, { kind: 'weight', emoji: '⚖️', label: 'Weigh' },
-  { kind: 'litter', emoji: '🧹', label: 'Litter' }, { kind: 'medication', emoji: '💊', label: 'Meds' },
-  { kind: 'symptom', emoji: '🩺', label: 'Observe' },
+const ACTIONS: Array<{ kind: Kind; label: string }> = [
+  { kind: 'feeding', label: 'Feed' }, { kind: 'weight', label: 'Weigh' }, { kind: 'litter', label: 'Litter' },
+  { kind: 'medication', label: 'Meds' }, { kind: 'symptom', label: 'Observe' },
 ]
 
 export function CatProfilePage() {
   const { id = '' } = useParams()
-  const { current, canEdit } = useHousehold()
+  const { current, canEdit, memberships, switchTo } = useHousehold()
   const hid = current!.id
   const cat = useCat(id)
+  const catHid = cat.data?.household_id
+  const foreign = !!catHid && catHid !== hid && memberships.some(m => m.household.id === catHid)
+  // Deep links and notifications can point at a cat in another household the user belongs to.
+  useEffect(() => { if (foreign) switchTo(catHid) }, [foreign, catHid, switchTo])
   const summaries = useCatSummaries(hid, true)
   const s = summaries.data?.find(c => c.cat_id === id)
   const url = useSignedUrl(s?.profile_thumbnail_path ?? s?.profile_photo_path)
@@ -41,8 +45,8 @@ export function CatProfilePage() {
   const tab = pathname.split(`/cats/${id}`)[1]?.split('/')[1] ?? ''
   const nav = useNavigate()
 
-  if (cat.isLoading) return <Spinner />
-  if (!cat.data) return <EmptyState emoji="🙈" title="Cat not found" body="It may belong to another household." action={<Link to="/cats"><Button variant="secondary">Back to cats</Button></Link>} />
+  if (cat.isLoading || foreign) return <Spinner />
+  if (!cat.data) return <EmptyState icon={Search} title="Cat not found" body="It may belong to another household." action={<Link to="/cats"><Button variant="secondary">Back to cats</Button></Link>} />
   const c = cat.data
   const live = canEdit && !c.archived_at && !c.deceased_on
   const sexLabel = c.sex === 'male' ? 'Male' : c.sex === 'female' ? 'Female' : null
@@ -50,7 +54,7 @@ export function CatProfilePage() {
 
   return (
     <div>
-      <header className="-mx-4 -mt-4 bg-gradient-to-b from-paw-100 to-transparent px-4 pb-2 pt-3">
+      <header className="-mx-4 -mt-4 bg-gradient-to-b from-stone-50 to-transparent px-4 pb-2 pt-3">
         <div className="flex items-center justify-between">
           <button onClick={() => nav('/cats')} className="-ml-2 rounded-full p-2.5 active:bg-white/60" aria-label="All cats"><ArrowLeft className="h-5 w-5" /></button>
           {others.length > 1 && <CatSwitcher cats={others} activeId={id} tab={tab} />}
@@ -67,8 +71,8 @@ export function CatProfilePage() {
                         <Camera className="h-6 w-6" /><span className="text-[10px] font-semibold">Add photo</span>
                       </span>
                     )}
-                    {url.data && <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-paw-500 text-white ring-2 ring-white">{busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}</span>}
-                    {busy && !url.data && <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70"><Loader2 className="h-6 w-6 animate-spin text-paw-500" /></span>}
+                    {url.data && <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-paw-500 text-white ring-2 ring-white">{busy ? <CircleNotch className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}</span>}
+                    {busy && !url.data && <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70"><CircleNotch className="h-6 w-6 animate-spin text-paw-500" /></span>}
                   </span>
                 )}
               </PhotoPicker>
@@ -87,12 +91,12 @@ export function CatProfilePage() {
         {live && (
           <div className="mt-4 grid grid-cols-6 gap-1.5">
             {ACTIONS.map(a => (
-              <button key={a.kind} onClick={() => setLog({ kind: a.kind })} className="flex flex-col items-center gap-0.5 rounded-2xl bg-white py-2 text-[11px] font-semibold text-stone-700 shadow-sm ring-1 ring-stone-100 active:scale-95">
-                <span className="text-xl leading-6">{a.emoji}</span>{a.label}
+              <button key={a.kind} onClick={() => setLog({ kind: a.kind })} className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
+                <CareTile kind={a.kind} />{a.label}
               </button>
             ))}
-            <PhotoPicker hid={hid} catId={id} multiple label="Add photos" className="flex flex-col items-center gap-0.5 rounded-2xl bg-white py-2 text-[11px] font-semibold text-stone-700 shadow-sm ring-1 ring-stone-100 active:scale-95">
-              {busy => <><span className="flex h-6 items-center text-xl leading-6">{busy ? <Loader2 className="h-5 w-5 animate-spin text-paw-500" /> : '📸'}</span>Photo</>}
+            <PhotoPicker hid={hid} catId={id} multiple label="Add photos" className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
+              {busy => <>{busy ? <span className="flex h-10 w-10 items-center justify-center"><CircleNotch className="h-5 w-5 animate-spin text-paw-500" /></span> : <CareTile kind="photo" />}Photo</>}
             </PhotoPicker>
           </div>
         )}
@@ -104,7 +108,7 @@ export function CatProfilePage() {
         <Routes>
           <Route index element={<Overview id={id} hid={hid} s={s} canLog={live} onLog={kind => setLog({ kind })} />} />
           <Route path="health" element={<HealthTab catId={id} />} />
-          <Route path="growth" element={<GrowthChart catId={id} />} />
+          <Route path="growth" element={<Suspense fallback={<Spinner />}><GrowthChart catId={id} /></Suspense>} />
           <Route path="photos" element={<PhotoGrid catId={id} />} />
           <Route path="timeline" element={<TimelinePage catId={id} embedded />} />
           <Route path="passport" element={<PassportTab cat={c} />} />
@@ -123,7 +127,7 @@ function TabBar({ id, active }: { id: string; active: string }) {
     bar.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
   }, [active])
   return (
-    <nav ref={bar} aria-label="Cat sections" className="scrollbar-none sticky top-0 z-30 -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 bg-orange-50/95 px-3 py-1.5 backdrop-blur">
+    <nav ref={bar} aria-label="Cat sections" className="scrollbar-none sticky top-0 z-30 -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 bg-white/95 px-3 py-1.5 backdrop-blur">
       {TABS.map(([path, label]) => (
         <NavLink key={path} to={`/cats/${id}${path ? `/${path}` : ''}`} end replace
           className={({ isActive }) => cx('shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition', isActive ? 'bg-stone-800 text-white' : 'text-stone-600 active:bg-stone-200')}>
@@ -151,14 +155,14 @@ function SwitchDot({ c, active, to }: { c: CatSummary; active: boolean; to: stri
   )
 }
 
-function Protection({ to, emoji, label, ok, d }: { to: string; emoji: string; label: string; ok: string; d: ReturnType<typeof dueLabel> }) {
+function Protection({ to, kind, label, ok, d }: { to: string; kind: 'vaccination' | 'parasite'; label: string; ok: string; d: ReturnType<typeof dueLabel> }) {
   const text = d.tone === 'ok' ? ok : d.tone === 'none' ? 'No record' : d.text
   const sub = d.tone === 'ok' ? `next ${d.text}` : d.tone === 'none' ? 'add a record' : d.tone === 'overdue' ? 'overdue' : 'due soon'
   return (
     <Link to={to} replace className={cx('rounded-2xl border p-3 transition active:scale-[0.98]',
       d.tone === 'overdue' ? 'border-red-200 bg-red-50' : d.tone === 'soon' ? 'border-amber-200 bg-amber-50' : 'border-stone-200 bg-white')}>
       <div className="text-[11px] font-medium uppercase tracking-wide text-stone-500">{label}</div>
-      <div className="mt-0.5 font-bold">{emoji} {text}</div>
+      <div className="mt-0.5 flex items-center gap-1.5 font-bold"><CareGlyph kind={kind} size={18} />{text}</div>
       <div className="text-xs text-stone-500">{sub}</div>
     </Link>
   )
@@ -184,14 +188,14 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
       <section>
         <SectionTitle>Today</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">
-          <TodayRow emoji="🍽️" label="Fed" done={fed} detail={fed ? ago(s.last_fed_at) : s.last_fed_at ? `Last ${ago(s.last_fed_at)}` : 'Not logged yet'} action={canLog && !fed ? () => onLog('feeding') : undefined} />
-          <TodayRow emoji="🧹" label="Litter" done={litter} detail={litter ? ago(s.last_litter_at) : s.last_litter_at ? `Last ${ago(s.last_litter_at)}` : 'Not logged yet'} action={canLog && !litter ? () => onLog('litter') : undefined} />
+          <TodayRow kind="feeding" label="Fed" done={fed} detail={fed ? ago(s.last_fed_at) : s.last_fed_at ? `Last ${ago(s.last_fed_at)}` : 'Not logged yet'} action={canLog && !fed ? () => onLog('feeding') : undefined} />
+          <TodayRow kind="litter" label="Litter" done={litter} detail={litter ? ago(s.last_litter_at) : s.last_litter_at ? `Last ${ago(s.last_litter_at)}` : 'Not logged yet'} action={canLog && !litter ? () => onLog('litter') : undefined} />
           {catMeds.map(m => {
             const target = m.times_per_day ?? 1
             const done = m.given_today >= target
             const cd = courseDay(m.start_on, m.end_on)
             return (
-              <TodayRow key={m.id} emoji="💊" label={m.name} done={done}
+              <TodayRow key={m.id} kind="medication" label={m.name} done={done}
                 detail={[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${m.given_today}/${target} today`].filter(Boolean).join(' · ')}
                 actionLabel="Give" action={canLog && !done ? () => give.mutateAsync(m).then(() => toast.show(`💊 ${m.name} dose recorded`, 'xp')).catch(e => toast.show(friendlyError(e), 'bad')) : undefined} />
             )
@@ -200,12 +204,12 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
       </section>
 
       <section>
-        <SectionTitle action={<Link to={`/cats/${id}/growth`} replace className="flex items-center text-xs font-semibold text-paw-600">Growth<ChevronRight className="h-3.5 w-3.5" /></Link>}>Health journey</SectionTitle>
+        <SectionTitle action={<Link to={`/cats/${id}/growth`} replace className="flex items-center text-xs font-semibold text-paw-600">Growth<CaretRight className="h-3.5 w-3.5" /></Link>}>Health journey</SectionTitle>
         <div className="space-y-3">
           <WeightStatusCard catId={id} compact />
           <div className="grid grid-cols-2 gap-3">
-            <Protection to={`/cats/${id}/health`} emoji="💉" label="Vaccines" ok="Protected" d={vaccine} />
-            <Protection to={`/cats/${id}/health`} emoji="🛡️" label="Parasite care" ok="Covered" d={parasite} />
+            <Protection to={`/cats/${id}/health`} kind="vaccination" label="Vaccines" ok="Protected" d={vaccine} />
+            <Protection to={`/cats/${id}/health`} kind="parasite" label="Parasite care" ok="Covered" d={parasite} />
           </div>
         </div>
       </section>
@@ -235,11 +239,11 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
       </div>
 
       <section>
-        <SectionTitle action={<Link to={`/cats/${id}/timeline`} replace className="flex items-center text-xs font-semibold text-paw-600">All<ChevronRight className="h-3.5 w-3.5" /></Link>}>Recent</SectionTitle>
+        <SectionTitle action={<Link to={`/cats/${id}/timeline`} replace className="flex items-center text-xs font-semibold text-paw-600">All<CaretRight className="h-3.5 w-3.5" /></Link>}>Recent</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">
           {recent.isLoading ? <Spinner className="py-6" /> : events.length === 0 ? <p className="px-4 py-5 text-center text-sm text-stone-400">Nothing logged yet. Tap a quick action above to start.</p> : events.map(e => (
             <div key={e.id} className="flex items-center gap-3 px-4 py-2.5">
-              <span className="text-lg">{KIND_META[e.kind]?.emoji ?? '🐾'}</span>
+              <CareTile kind={e.kind} size="sm" />
               <div className="min-w-0 flex-1"><div className="truncate text-sm font-medium">{e.title}</div>{e.detail && <div className="truncate text-xs text-stone-500">{e.detail}</div>}</div>
               <span className="shrink-0 text-xs text-stone-400">{isTodayIso(e.occurred_at) ? timeLabel(e.occurred_at) : ago(e.occurred_at)}</span>
             </div>
@@ -250,10 +254,10 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
   )
 }
 
-function TodayRow({ emoji, label, done, detail, action, actionLabel = 'Log' }: { emoji: string; label: string; done: boolean; detail: string; action?: () => void; actionLabel?: string }) {
+function TodayRow({ kind, label, done, detail, action, actionLabel = 'Log' }: { kind: string; label: string; done: boolean; detail: string; action?: () => void; actionLabel?: string }) {
   return (
     <div className="flex min-h-14 items-center gap-3 px-4 py-2">
-      <span className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg', done ? 'bg-emerald-50' : 'bg-stone-100')}>{done ? '✓' : emoji}</span>
+      {done ? <IconTile icon={Check} tone="emerald" size="sm" className="h-9 w-9" /> : <CareTile kind={kind} size="sm" className="h-9 w-9" />}
       <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{label}</div><div className="truncate text-xs text-stone-500">{detail}</div></div>
       {action ? <button onClick={action} className="rounded-full bg-paw-500 px-3.5 py-1.5 text-xs font-semibold text-white active:scale-95">{actionLabel}</button>
         : done ? <Chip tone="ok">Done</Chip> : null}

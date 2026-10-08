@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, X } from 'lucide-react'
+import { CaretRight, X, IconTile, Info, Lightbulb } from '../../components/icons'
 import { Card, SectionTitle, cx } from '../../components/ui'
 import { useCatTips, useHomeTip } from './api'
 import type { CareTip } from './engine'
@@ -17,7 +17,7 @@ function TipBlock({ tip, label, tone, onDismiss, action }: { tip: CareTip; label
   return (
     <Card className={cx('relative', tone === 'hint' && 'bg-amber-50/60 ring-amber-100', tone === 'breed' && 'bg-paw-50/70 ring-paw-100')}>
       <div className="flex items-start gap-3">
-        <span className="text-2xl leading-none" aria-hidden>{tip.icon ?? '💡'}</span>
+        <IconTile icon={tone === 'hint' ? Info : Lightbulb} tone={tone === 'hint' ? 'amber' : tone === 'breed' ? 'paw' : 'sky'} size="sm" />
         <div className="min-w-0 flex-1 pr-6">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-stone-500">{label}</div>
           <div className="mt-0.5 font-semibold leading-snug">{tip.title}</div>
@@ -43,10 +43,10 @@ export function TipsCard({ hid, catId, name }: { hid: string; catId: string; nam
   if (!hints.length && !breedInsight && !fact) return null
   return (
     <section>
-      <SectionTitle action={<Link to="/learn" className="flex items-center text-xs font-semibold text-paw-600">Learn<ChevronRight className="h-3.5 w-3.5" /></Link>}>Tips for {name}</SectionTitle>
+      <SectionTitle action={<Link to="/learn" className="flex items-center text-xs font-semibold text-paw-600">Learn<CaretRight className="h-3.5 w-3.5" /></Link>}>Tips for {name}</SectionTitle>
       <div className="space-y-3">
         {hints.map(h => <TipBlock key={h.code} tip={h} tone="hint" label="Based on your logs" onDismiss={() => dismiss(h.code)} />)}
-        {breedInsight && <TipBlock tip={breedInsight} tone="breed" label={`💡 Breed insight${breed ? ` · ${breed.name}` : ''}`} onDismiss={() => dismiss(breedInsight.code)} />}
+        {breedInsight && <TipBlock tip={breedInsight} tone="breed" label={`Breed insight${breed ? ` · ${breed.name}` : ''}`} onDismiss={() => dismiss(breedInsight.code)} />}
         {fact && (
           <TipBlock tip={fact} tone="fact" label="Did you know?"
             action={factCount > 1 ? <button onClick={() => setOffset(o => o + 1)} className="mt-2 shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600 active:scale-95">Next fact</button> : null} />

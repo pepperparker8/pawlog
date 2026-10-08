@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
-import { Loader2, X } from 'lucide-react'
+import { CircleNotch, X, Cat, IconTile, type Icon, type Tone } from '../icons'
 
 function cx(...c: Array<string | false | null | undefined>) { return c.filter(Boolean).join(' ') }
 
@@ -16,7 +16,7 @@ export function Button({ variant = 'primary', loading, className, children, ...r
   }[variant]
   return (
     <button className={cx(base, v, className)} disabled={loading || rest.disabled} {...rest}>
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+      {loading && <CircleNotch className="h-4 w-4 animate-spin" />}
       {children}
     </button>
   )
@@ -45,7 +45,7 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
 
 export function Card({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className={cx('rounded-2xl bg-white shadow-sm ring-1 ring-stone-100', !/(^|\s)p-\d/.test(className ?? '') && 'p-4', onClick && 'cursor-pointer active:bg-stone-50', className)}>
+    <div onClick={onClick} className={cx('rounded-2xl bg-white shadow-[0_1px_3px_rgba(28,25,23,0.06)] ring-1 ring-stone-200/70', !/(^|\s)p-\d/.test(className ?? '') && 'p-4', onClick && 'cursor-pointer active:bg-stone-50', className)}>
       {children}
     </div>
   )
@@ -60,7 +60,7 @@ export function Chip({ children, tone = 'neutral', className }: { children: Reac
 }
 
 export function Spinner({ className }: { className?: string }) {
-  return <div className={cx('flex justify-center py-10', className)}><Loader2 className="h-6 w-6 animate-spin text-paw-500" /></div>
+  return <div className={cx('flex justify-center py-10', className)}><CircleNotch className="h-6 w-6 animate-spin text-paw-500" /></div>
 }
 
 export function ErrorNote({ message }: { message: string | null | undefined }) {
@@ -68,10 +68,10 @@ export function ErrorNote({ message }: { message: string | null | undefined }) {
   return <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
 }
 
-export function EmptyState({ emoji = '🐾', title, body, action }: { emoji?: string; title: string; body?: string; action?: ReactNode }) {
+export function EmptyState({ icon = Cat, tone = 'paw', title, body, action }: { icon?: Icon; tone?: Tone; title: string; body?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
-      <div className="text-5xl">{emoji}</div>
+      <IconTile icon={icon} tone={tone} size="xl" className="mb-2" />
       <h3 className="text-base font-semibold text-stone-800">{title}</h3>
       {body && <p className="max-w-xs text-sm text-stone-500">{body}</p>}
       {action && <div className="mt-3">{action}</div>}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { lazy, useEffect, useState, type FormEvent } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
@@ -14,21 +14,24 @@ import { CatsPage } from './features/cats/CatsPage'
 import { CatForm } from './features/cats/CatForm'
 import { CatProfilePage } from './features/cats/CatProfilePage'
 import { TimelinePage } from './features/timeline/TimelinePage'
-import { CarePage } from './features/care/CarePage'
-import { FoodsPage } from './features/care/FoodsPage'
-import { PhotosPage } from './features/photos/PhotosPage'
-import { HouseholdPage } from './features/household/HouseholdPage'
 import { InvitePage } from './features/household/InvitePage'
-import { AchievementsPage } from './features/gamification/AchievementsPage'
-import { NotificationsPage } from './features/notifications/NotificationsPage'
-import { SearchPage } from './features/search/SearchPage'
-import { VetSummaryPage } from './features/vet/VetSummaryPage'
-import { ArticlePage, LearnPage } from './features/learn/LearnPage'
-import { useRealtime } from './features/notifications/api'
+import { useRealtime, useReminderRefresh } from './features/notifications/api'
 import { startQueueSync } from './lib/offlineQueue'
 import { useCreateHousehold } from './features/household/api'
 import { friendlyError } from './lib/errors'
 import { rememberReturnPath, takeReturnPath } from './lib/appUrl'
+import { House } from './components/icons'
+
+const CarePage = lazy(() => import('./features/care/CarePage').then(x => ({ default: x.CarePage })))
+const FoodsPage = lazy(() => import('./features/care/FoodsPage').then(x => ({ default: x.FoodsPage })))
+const PhotosPage = lazy(() => import('./features/photos/PhotosPage').then(x => ({ default: x.PhotosPage })))
+const HouseholdPage = lazy(() => import('./features/household/HouseholdPage').then(x => ({ default: x.HouseholdPage })))
+const AchievementsPage = lazy(() => import('./features/gamification/AchievementsPage').then(x => ({ default: x.AchievementsPage })))
+const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then(x => ({ default: x.NotificationsPage })))
+const SearchPage = lazy(() => import('./features/search/SearchPage').then(x => ({ default: x.SearchPage })))
+const VetSummaryPage = lazy(() => import('./features/vet/VetSummaryPage').then(x => ({ default: x.VetSummaryPage })))
+const LearnPage = lazy(() => import('./features/learn/LearnPage').then(x => ({ default: x.LearnPage })))
+const ArticlePage = lazy(() => import('./features/learn/LearnPage').then(x => ({ default: x.ArticlePage })))
 
 export default function App() {
   return (
@@ -90,6 +93,7 @@ function WithHousehold() {
   const { current, loading } = useHousehold()
   const toast = useToast()
   useRealtime(current?.id ?? null, user?.id ?? null)
+  useReminderRefresh(current?.id ?? null, user?.id ?? null)
   useEffect(() => startQueueSync(n => toast.show(`Synced ${n} offline log${n > 1 ? 's' : ''}`, 'ok')), [toast])
   if (loading) return <Spinner className="py-32" />
   if (!current) return <CreateFirstHousehold />
@@ -108,7 +112,7 @@ function CreateFirstHousehold() {
   }
   return (
     <div className="mx-auto max-w-sm px-6 py-16">
-      <EmptyState emoji="🏠" title="Name your household" body="A household is the shared space for your cats and the people who care for them." />
+      <EmptyState icon={House} title="Name your household" body="A household is the shared space for your cats and the people who care for them." />
       <form onSubmit={submit} className="space-y-3">
         <Field label="Household name"><Input value={name} onChange={e => setName(e.target.value)} autoFocus /></Field>
         <ErrorNote message={error} />

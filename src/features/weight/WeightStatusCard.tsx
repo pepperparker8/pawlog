@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Target as TargetIcon } from 'lucide-react'
+import { Target as TargetIcon } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, ErrorNote, Field, Input, Select, Sheet, Textarea, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'

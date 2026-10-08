@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Eye, Info, Sparkles } from 'lucide-react'
+import { Warning, Eye, Info, Sparkle, Cat, CareTile, CareGlyph, Check } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
-import { useHouseholdToday, useOnThisDay, usePatterns, KIND_META } from '../timeline/api'
+import { useHouseholdToday, useOnThisDay, usePatterns } from '../timeline/api'
 import { useQuests } from '../gamification/api'
 import { LevelCard } from '../gamification/LevelCard'
 import { WeeklyGoals } from '../gamification/WeeklyGoals'
@@ -17,6 +17,7 @@ import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { useWeightStatus } from '../weight/api'
 import { statusView } from '../weight/status'
 import { HomeTip } from '../tips/TipsCard'
+import { attention, byAttention } from './attention'
 
 export function HomePage() {
   const { current, canEdit } = useHousehold()
@@ -35,7 +36,7 @@ export function HomePage() {
     return (
       <div>
         <h1 className="mb-2 text-2xl font-black">{current!.name}</h1>
-        <EmptyState emoji="🐈" title="No cats yet" body="Add your first cat, or load a demo household to look around."
+        <EmptyState icon={Cat} title="No cats yet" body="Add your first cat, or load a demo household to look around."
           action={canEdit && (
             <div className="flex flex-col gap-2">
               <Link to="/cats/new"><Button className="w-full">Add a cat</Button></Link>
@@ -72,7 +73,7 @@ export function HomePage() {
         <section>
           <SectionTitle action={<Link to="/cats" className="text-xs text-paw-600">All cats</Link>}>Your cats</SectionTitle>
           <Card className="divide-y divide-stone-100 p-0">
-            {[...cats.data].sort((a, b) => attention(b) - attention(a)).map(c => <CatRow key={c.cat_id} cat={c} />)}
+            {byAttention(cats.data).map(c => <CatRow key={c.cat_id} cat={c} />)}
           </Card>
         </section>
       )}
@@ -86,7 +87,7 @@ export function HomePage() {
             {act.map(p => (
               <Link key={p.cat_id + p.code} to={`/cats/${p.cat_id}`}>
                 <Card className={`flex gap-3 ${p.severity === 'act' ? 'ring-red-100' : 'ring-amber-100'}`}>
-                  {p.severity === 'act' ? <AlertTriangle className="h-5 w-5 shrink-0 text-red-500" /> : <Eye className="h-5 w-5 shrink-0 text-amber-500" />}
+                  {p.severity === 'act' ? <Warning className="h-5 w-5 shrink-0 text-red-500" /> : <Eye className="h-5 w-5 shrink-0 text-amber-500" />}
                   <div className="min-w-0">
                     <div className="text-sm font-semibold">{p.cat_name}: {p.title}</div>
                     <div className="text-xs text-stone-600">{p.detail}</div>
@@ -113,7 +114,7 @@ export function HomePage() {
           <Card className="divide-y divide-stone-100 p-0">
             {quests.data.map(q => (
               <div key={q.quest_code} className="flex items-center gap-3 px-4 py-2.5">
-                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${q.completed ? 'bg-emerald-100' : 'bg-stone-100'}`}>{q.completed ? '✓' : '○'}</div>
+                <span aria-hidden className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${q.completed ? 'bg-emerald-100 text-emerald-700' : 'ring-1 ring-inset ring-stone-300'}`}>{q.completed && <Check size={14} weight="bold" />}</span>
                 <div className="min-w-0 flex-1">
                   <div className={`text-sm font-medium ${q.completed ? 'text-stone-400 line-through' : ''}`}>{q.title}</div>
                   <ProgressBar value={q.done} max={q.target} className="mt-1 h-1.5" />
@@ -133,7 +134,7 @@ export function HomePage() {
           <Card className="space-y-2">
             {otd.data.slice(0, 4).map(e => (
               <div key={e.id} className="flex items-start gap-2 text-sm">
-                <span>{KIND_META[e.kind]?.emoji}</span>
+                <CareTile kind={e.kind} size="sm" />
                 <div className="min-w-0"><span className="font-medium">{e.title}</span> <span className="text-stone-500">· {dateLabel(e.occurred_at)}</span>
                   {e.detail && <div className="truncate text-xs text-stone-500">{e.detail}</div>}</div>
               </div>
@@ -142,7 +143,7 @@ export function HomePage() {
         </section>
       )}
 
-      <p className="flex items-center justify-center gap-1 pb-2 text-xs text-stone-400"><Sparkles className="h-3 w-3" /> Small daily logs become a lifelong story.</p>
+      <p className="flex items-center justify-center gap-1 pb-2 text-xs text-stone-400"><Sparkle className="h-3 w-3" /> Small daily logs become a lifelong story.</p>
       {log && <QuickLogSheet key={log.catId + log.kind} open onClose={() => setLog(null)} presetCat={log.catId} presetKind={log.kind} />}
     </div>
   )
@@ -150,9 +151,8 @@ export function HomePage() {
 
 // Most households have one or two cats: give each a full card. Larger households get a compact list.
 const HERO_MAX = 2
-const HERO_ACTIONS: Array<{ kind: Kind; emoji: string; label: string }> = [
-  { kind: 'feeding', emoji: '🍽️', label: 'Feed' }, { kind: 'litter', emoji: '🧹', label: 'Litter' },
-  { kind: 'weight', emoji: '⚖️', label: 'Weigh' }, { kind: 'symptom', emoji: '🩺', label: 'Observe' },
+const HERO_ACTIONS: Array<{ kind: Kind; label: string }> = [
+  { kind: 'feeding', label: 'Feed' }, { kind: 'litter', label: 'Litter' }, { kind: 'weight', label: 'Weigh' }, { kind: 'symptom', label: 'Observe' },
 ]
 
 function nextDue(c: CatSummary) {
@@ -170,7 +170,7 @@ function CatHero({ cat, canLog, onLog }: { cat: CatSummary; canLog: boolean; onL
   const due = nextDue(cat)
   return (
     <Card className="overflow-hidden p-0">
-      <Link to={`/cats/${cat.cat_id}`} className="relative block aspect-[16/10] bg-gradient-to-br from-paw-100 to-paw-200 active:opacity-90">
+      <Link to={`/cats/${cat.cat_id}`} className="relative block aspect-[16/10] bg-gradient-to-br from-stone-50 to-stone-100 active:opacity-90">
         {url.data ? <img src={url.data} alt={cat.name} className="h-full w-full object-cover" />
           : <span className="flex h-full items-center justify-center text-6xl font-black text-paw-400">{cat.name.slice(0, 1).toUpperCase()}</span>}
         <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-4 pb-3 pt-10 text-white">
@@ -181,10 +181,10 @@ function CatHero({ cat, canLog, onLog }: { cat: CatSummary; canLog: boolean; onL
       </Link>
       <div className="space-y-3 p-3">
         <div className="flex flex-wrap gap-1.5 text-xs">
-          <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? '🍽️ Fed today' : '🍽️ Not fed yet'}</Chip>
-          <Chip tone={litter ? 'ok' : 'neutral'}>{litter ? '🧹 Litter done' : '🧹 Not scooped yet'}</Chip>
-          {cat.active_medications > 0 && <Chip tone="brand">💊 {cat.active_medications} active</Chip>}
-          {cat.symptoms_7d > 0 && <Chip tone="warn">🩺 {cat.symptoms_7d} noted this week</Chip>}
+          <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? <Check size={14} weight="bold" /> : <CareGlyph kind="feeding" size={14} />}{fed ? 'Fed today' : 'Not fed yet'}</Chip>
+          <Chip tone={litter ? 'ok' : 'neutral'}>{litter ? <Check size={14} weight="bold" /> : <CareGlyph kind="litter" size={14} />}{litter ? 'Litter done' : 'Not scooped yet'}</Chip>
+          {cat.active_medications > 0 && <Chip tone="brand"><CareGlyph kind="medication" size={14} />{cat.active_medications} active</Chip>}
+          {cat.symptoms_7d > 0 && <Chip tone="warn"><CareGlyph kind="symptom" size={14} />{cat.symptoms_7d} noted this week</Chip>}
         </div>
         {due && (
           <Link to={`/cats/${cat.cat_id}/health`} className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-sm">
@@ -195,8 +195,8 @@ function CatHero({ cat, canLog, onLog }: { cat: CatSummary; canLog: boolean; onL
         {canLog && !cat.archived_at && (
           <div className="grid grid-cols-4 gap-2">
             {HERO_ACTIONS.map(a => (
-              <button key={a.kind} onClick={() => onLog(a.kind)} className="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-2xl bg-paw-50 text-[11px] font-semibold text-stone-700 active:scale-95">
-                <span className="text-lg leading-none" aria-hidden>{a.emoji}</span>{a.label}
+              <button key={a.kind} onClick={() => onLog(a.kind)} className="flex flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
+                <CareTile kind={a.kind} />{a.label}
               </button>
             ))}
           </div>
@@ -204,11 +204,6 @@ function CatHero({ cat, canLog, onLog }: { cat: CatSummary; canLog: boolean; onL
       </div>
     </Card>
   )
-}
-
-function attention(c: CatSummary) {
-  const overdue = [c.next_task_due, c.next_vaccine_due, c.next_parasite_due].some(d => dueLabel(d).tone === 'overdue')
-  return (overdue ? 2 : 0) + (c.symptoms_7d > 0 ? 1 : 0)
 }
 
 function CatRow({ cat }: { cat: CatSummary }) {
@@ -219,7 +214,7 @@ function CatRow({ cat }: { cat: CatSummary }) {
     <Link to={`/cats/${cat.cat_id}`} className="flex min-h-16 items-center gap-3 px-3 py-2.5 active:bg-paw-50">
       <span className="relative shrink-0">
         {url.data ? <img src={url.data} alt="" className="h-12 w-12 rounded-full object-cover" loading="lazy" />
-          : <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-paw-100 to-paw-200 text-lg font-black text-paw-500">{cat.name.slice(0, 1).toUpperCase()}</span>}
+          : <span className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-stone-50 to-stone-100 text-lg font-black text-paw-500">{cat.name.slice(0, 1).toUpperCase()}</span>}
         <span className={cx('absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full ring-2 ring-white', a >= 2 ? 'bg-red-500' : a === 1 ? 'bg-amber-400' : 'bg-emerald-500')} aria-label={a >= 2 ? 'Due' : a === 1 ? 'Follow-up' : 'On track'} />
       </span>
       <span className="min-w-0 flex-1">
@@ -229,8 +224,8 @@ function CatRow({ cat }: { cat: CatSummary }) {
       <span className="flex shrink-0 gap-1 text-xs">
         {a >= 2 && <Chip tone="bad">Due</Chip>}
         {a === 1 && <Chip tone="warn">Watch</Chip>}
-        {cat.active_medications > 0 && <Chip tone="brand">💊 {cat.active_medications}</Chip>}
-        <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? '🍽️ Fed' : '🍽️ —'}</Chip>
+        {cat.active_medications > 0 && <Chip tone="brand"><CareGlyph kind="medication" size={14} />{cat.active_medications}</Chip>}
+        <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? <><Check size={14} weight="bold" />Fed</> : <><CareGlyph kind="feeding" size={14} />Not yet</>}</Chip>
       </span>
     </Link>
   )
@@ -243,7 +238,7 @@ export function CatTile({ cat }: { cat: CatSummary }) {
   return (
     <Link to={`/cats/${cat.cat_id}`} className="block active:scale-[.98]">
       <Card className="h-full overflow-hidden p-0">
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-paw-100 to-paw-200">
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-stone-50 to-stone-100">
           {url.data ? <img src={url.data} alt={cat.name} className="h-full w-full object-cover" loading="lazy" />
             : <span className="flex h-full items-center justify-center text-4xl font-black text-paw-400">{cat.name.slice(0, 1).toUpperCase()}</span>}
           {(overdue || cat.symptoms_7d > 0) && <span className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-red-600 shadow-sm">{overdue ? 'Due' : 'Watch'}</span>}
@@ -252,8 +247,8 @@ export function CatTile({ cat }: { cat: CatSummary }) {
           <div className="truncate font-bold">{cat.name}</div>
           <div className="truncate text-xs text-stone-500">{[catAge(cat.date_of_birth, cat.dob_is_estimate), cat.last_weight_kg != null && kg(cat.last_weight_kg)].filter(Boolean).join(' · ')}</div>
           <div className="mt-2 flex gap-1 text-xs">
-            <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? '🍽️ Fed' : '🍽️ Not yet'}</Chip>
-            {cat.active_medications > 0 && <Chip tone="brand">💊 {cat.active_medications}</Chip>}
+            <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? <><Check size={14} weight="bold" />Fed</> : <><CareGlyph kind="feeding" size={14} />Not yet</>}</Chip>
+            {cat.active_medications > 0 && <Chip tone="brand"><CareGlyph kind="medication" size={14} />{cat.active_medications}</Chip>}
           </div>
         </div>
       </Card>

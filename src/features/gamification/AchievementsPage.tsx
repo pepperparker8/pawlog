@@ -6,12 +6,8 @@ import { LevelCard } from './LevelCard'
 import { useBadges, useLevels, useRecentXp, useUserBadges, useXpRules } from './api'
 import { ago } from '../../lib/format'
 import type { XpRule } from '../../lib/types'
+import { IconTile, BADGE } from '../../components/icons'
 
-const ICONS: Record<string, string> = {
-  paw: '🐾', scale: '⚖️', chart: '📈', bowl: '🍽️', sparkle: '✨', brush: '🧼', camera: '📷', pill: '💊', stetho: '🩺',
-  shield: '🛡️', flame: '🔥', crown: '👑', star: '⭐', cats: '🐈', home: '🏠', cake: '🎂',
-  yarn: '🧶', bug: '🐞', leaf: '🌿', target: '🎯',
-}
 
 export function AchievementsPage() {
   const { user } = useAuth()
@@ -34,8 +30,8 @@ export function AchievementsPage() {
           {shown.map(b => {
             const has = earned.has(b.code)
             return (
-              <Card key={b.code} className={`flex flex-col items-center p-3 text-center ${has ? '' : 'opacity-50 grayscale'}`}>
-                <div className="text-3xl">{ICONS[b.icon] ?? '🏅'}</div>
+              <Card key={b.code} className={`flex flex-col items-center p-3 text-center ${has ? '' : 'opacity-60'}`}>
+                <IconTile icon={(BADGE[b.icon] ?? BADGE.star).icon} tone={has ? (BADGE[b.icon] ?? BADGE.star).tone : 'stone'} size="lg" />
                 <div className="mt-1 text-xs font-bold leading-tight">{b.name}</div>
                 <div className="mt-0.5 text-[10px] leading-tight text-stone-500">{b.description}</div>
               </Card>

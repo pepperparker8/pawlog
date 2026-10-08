@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Bowl } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ErrorNote, Field, Input, Select, Sheet, Spinner } from '../../components/ui'
 import { PageHeader } from '../../components/layout/PageHeader'
@@ -16,7 +16,7 @@ export function FoodsPage() {
     <div>
       <PageHeader title="Food profiles" back="/more" action={canEdit && <Button className="px-3" onClick={() => setEditing({})}><Plus className="h-4 w-4" />Food</Button>} />
       {foods.isLoading ? <Spinner /> : !foods.data?.length ? (
-        <EmptyState emoji="🍽️" title="No foods yet" body="Save the foods you use so feeding logs are one tap." action={canEdit && <Button onClick={() => setEditing({})}>Add food</Button>} />
+        <EmptyState icon={Bowl} title="No foods yet" body="Save the foods you use so feeding logs are one tap." action={canEdit && <Button onClick={() => setEditing({})}>Add food</Button>} />
       ) : (
         <Card className="divide-y divide-stone-100 p-0">
           {foods.data.map(f => (

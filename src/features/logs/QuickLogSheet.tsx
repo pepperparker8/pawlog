@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { CaretDown, CareTile, CareGlyph } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
 import { Avatar, Button, ErrorNote, Field, Input, Select, Sheet, Textarea, cx } from '../../components/ui'
@@ -13,17 +13,17 @@ import { useNavigate } from 'react-router-dom'
 import type { CatSummary } from '../../lib/types'
 
 export type Kind = 'feeding' | 'water' | 'litter' | 'weight' | 'symptom' | 'medication' | 'grooming' | 'activity' | 'behavior' | 'journal'
-export const KINDS: Array<{ kind: Kind; table: LogTable; emoji: string; label: string; multi: boolean; done: string }> = [
-  { kind: 'feeding', table: 'feeding_logs', emoji: '🍽️', label: 'Feed', multi: true, done: '🍽️ Meal logged' },
-  { kind: 'weight', table: 'weight_logs', emoji: '⚖️', label: 'Weight', multi: false, done: '⚖️ Weight recorded' },
-  { kind: 'litter', table: 'litter_logs', emoji: '🧹', label: 'Litter', multi: true, done: '🧹 Litter logged' },
-  { kind: 'medication', table: 'medication_logs', emoji: '💊', label: 'Meds', multi: false, done: '💊 Dose recorded' },
-  { kind: 'symptom', table: 'symptom_logs', emoji: '🩺', label: 'Symptom', multi: false, done: '🩺 Observation saved' },
-  { kind: 'water', table: 'water_logs', emoji: '💧', label: 'Water', multi: true, done: '💧 Fresh water logged' },
-  { kind: 'grooming', table: 'grooming_logs', emoji: '🧼', label: 'Groom', multi: true, done: '🧼 Grooming logged' },
-  { kind: 'activity', table: 'activity_logs', emoji: '🧶', label: 'Play', multi: true, done: '🧶 Play time logged' },
-  { kind: 'behavior', table: 'behavior_logs', emoji: '🐈', label: 'Behavior', multi: false, done: '🐈 Behavior noted' },
-  { kind: 'journal', table: 'journal_entries', emoji: '📓', label: 'Journal', multi: false, done: '📓 Journal saved' },
+export const KINDS: Array<{ kind: Kind; table: LogTable; label: string; multi: boolean; done: string }> = [
+  { kind: 'feeding', table: 'feeding_logs', label: 'Feed', multi: true, done: '🍽️ Meal logged' },
+  { kind: 'weight', table: 'weight_logs', label: 'Weight', multi: false, done: '⚖️ Weight recorded' },
+  { kind: 'litter', table: 'litter_logs', label: 'Litter', multi: true, done: '🧹 Litter logged' },
+  { kind: 'medication', table: 'medication_logs', label: 'Meds', multi: false, done: '💊 Dose recorded' },
+  { kind: 'symptom', table: 'symptom_logs', label: 'Symptom', multi: false, done: '🩺 Observation saved' },
+  { kind: 'water', table: 'water_logs', label: 'Water', multi: true, done: '💧 Fresh water logged' },
+  { kind: 'grooming', table: 'grooming_logs', label: 'Groom', multi: true, done: '🧼 Grooming logged' },
+  { kind: 'activity', table: 'activity_logs', label: 'Play', multi: true, done: '🧶 Play time logged' },
+  { kind: 'behavior', table: 'behavior_logs', label: 'Behavior', multi: false, done: '🐈 Behavior noted' },
+  { kind: 'journal', table: 'journal_entries', label: 'Journal', multi: false, done: '📓 Journal saved' },
 ]
 
 export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: boolean; onClose: () => void; presetCat?: string; presetKind?: Kind }) {
@@ -91,8 +91,8 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
           <div className="grid grid-cols-5 gap-1.5">
             {KINDS.map(k => (
               <button key={k.kind} onClick={() => setKind(k.kind)} aria-pressed={kind === k.kind}
-                className={cx('flex flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-semibold transition', kind === k.kind ? 'bg-paw-500 text-white shadow-sm' : 'bg-stone-100 text-stone-700 active:bg-stone-200')}>
-                <span className="text-xl leading-6">{k.emoji}</span>{k.label}
+                className={cx('flex flex-col items-center gap-1 rounded-2xl py-2 text-[11px] font-semibold ring-1 transition', kind === k.kind ? 'bg-paw-50 text-paw-700 ring-paw-300' : 'bg-white text-stone-600 ring-transparent hover:bg-stone-50')}>
+                <CareTile kind={k.kind} size="sm" />{k.label}
               </button>
             ))}
           </div>
@@ -115,10 +115,10 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
             )}
           </div>
 
-          <KindFields kind={kind} f={f} set={set} foods={foods.data ?? []} meds={catMeds} />
+          <KindFields kind={kind} f={f} set={set} foods={foods.data ?? []} meds={catMeds} manageFoods={() => { onClose(); nav('/more/foods') }} />
 
           <button type="button" onClick={() => setMore(m => !m)} className="flex w-full items-center justify-between rounded-xl py-1 text-sm font-medium text-stone-500">
-            <span>{kind === 'journal' ? 'Date and time' : 'Time and note'}</span><ChevronDown className={cx('h-4 w-4 transition', more && 'rotate-180')} />
+            <span>{kind === 'journal' ? 'Date and time' : 'Time and note'}</span><CaretDown className={cx('h-4 w-4 transition', more && 'rotate-180')} />
           </button>
           {more && (
             <div className="space-y-3">
@@ -143,7 +143,7 @@ function CatPick({ cat, on, onClick, compact }: { cat: CatSummary; on: boolean; 
   )
 }
 
-function KindFields({ kind, f, set, foods, meds }: { kind: Kind; f: Record<string, string>; set: (k: string, v: string) => void; foods: Array<{ id: string; product: string; brand: string | null }>; meds: MedToday[] }) {
+function KindFields({ kind, f, set, foods, meds, manageFoods }: { kind: Kind; f: Record<string, string>; set: (k: string, v: string) => void; foods: Array<{ id: string; product: string; brand: string | null }>; meds: MedToday[]; manageFoods: () => void }) {
   switch (kind) {
     case 'feeding': return (
       <div className="grid grid-cols-2 gap-3">
@@ -152,11 +152,12 @@ function KindFields({ kind, f, set, foods, meds }: { kind: Kind; f: Record<strin
             <option value="">Free text below</option>
             {foods.map(x => <option key={x.id} value={x.id}>{x.brand ? `${x.brand} ` : ''}{x.product}</option>)}
           </Select>
+          <button type="button" onClick={manageFoods} className="mt-1 text-xs font-semibold text-paw-700">{foods.length ? 'Manage foods' : 'Save your usual foods'}</button>
         </Field>
         {!f.food_id && <Field label="Food name" className="col-span-2"><Input value={f.food_name ?? ''} onChange={e => set('food_name', e.target.value)} placeholder="Tuna pouch" /></Field>}
         <Field label="Amount"><Input type="number" inputMode="decimal" step="any" value={f.amount ?? ''} onChange={e => set('amount', e.target.value)} /></Field>
         <Field label="Unit"><Select value={f.unit ?? 'g'} onChange={e => set('unit', e.target.value)}>{['g', 'ml', 'pouch', 'can', 'cup', 'piece', 'scoop'].map(u => <option key={u}>{u}</option>)}</Select></Field>
-        <Field label="Appetite (0–5)" className="col-span-2"><Input type="range" min={0} max={5} value={f.appetite ?? '4'} onChange={e => set('appetite', e.target.value)} /></Field>
+        <Field label={`Appetite · ${f.appetite ?? '4'} of 5`} className="col-span-2"><input type="range" min={0} max={5} value={f.appetite ?? '4'} onChange={e => set('appetite', e.target.value)} className="w-full accent-paw-500" /></Field>
       </div>)
     case 'water': return (
       <Field label="Action"><Select value={f.action ?? 'refreshed'} onChange={e => set('action', e.target.value)}><option value="refreshed">Refreshed bowl</option><option value="checked">Checked</option><option value="fountain_cleaned">Cleaned fountain</option></Select></Field>)
@@ -190,7 +191,7 @@ function KindFields({ kind, f, set, foods, meds }: { kind: Kind; f: Record<strin
             {meds.map(m => (
               <button key={m.id} type="button" onClick={() => { set('cat_medication_id', m.id); set('medication_name', m.name); set('dose', m.dose ?? '') }}
                 className={cx('rounded-full px-3 py-1.5 text-sm font-medium', f.cat_medication_id === m.id ? 'bg-paw-500 text-white' : 'bg-paw-50 text-paw-700 ring-1 ring-paw-200')}>
-                💊 {m.name}{m.given_today ? ` · ${m.given_today} today` : ''}
+                <CareGlyph kind="medication" size={14} className="mr-1 inline align-[-2px]" />{m.name}{m.given_today ? ` · ${m.given_today} today` : ''}
               </button>
             ))}
           </div>

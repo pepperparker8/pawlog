@@ -18,8 +18,8 @@ export default defineConfig({
         name: 'PawLog',
         short_name: 'PawLog',
         description: 'Multi-cat health, care and memory tracker',
-        theme_color: '#f97316',
-        background_color: '#fff7ed',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         start_url: base,
         scope: base,
@@ -42,7 +42,7 @@ export default defineConfig({
     }),
   ],
   build: {
-    rolldownOptions: { output: { manualChunks: (id: string) => (id.includes('recharts') ? 'charts' : id.includes('@supabase') ? 'supabase' : id.includes('node_modules') ? 'vendor' : undefined) } },
+    rolldownOptions: { output: { manualChunks: (id: string) => (id.includes('@supabase') ? 'supabase' : /node_modules\/(react|react-dom|react-router|scheduler|@tanstack)\//.test(id) ? 'react' : undefined) } },
   },
   test: {
     environment: 'jsdom',

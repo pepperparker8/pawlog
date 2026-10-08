@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ChevronRight, Search } from 'lucide-react'
+import { CaretRight, Search, BookOpen, IconTile, TOPIC } from '../../components/icons'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { Card, Chip, EmptyState, ErrorNote, Input, Spinner, cx } from '../../components/ui'
 import { dateLabel } from '../../lib/format'
@@ -8,16 +8,16 @@ import { friendlyError } from '../../lib/errors'
 import { useArticle, useArticles, type Article } from '../tips/api'
 import { parseInline, parseMarkdown, type Block } from './markdown'
 
-export const CATEGORIES: Array<{ code: string; label: string; emoji: string }> = [
-  { code: 'food', label: 'Food', emoji: '🍽️' },
-  { code: 'play', label: 'Play', emoji: '🧶' },
-  { code: 'training', label: 'Training', emoji: '🎓' },
-  { code: 'first-aid', label: 'First aid', emoji: '🚑' },
-  { code: 'vet', label: 'Vet visits', emoji: '🩺' },
-  { code: 'massage', label: 'Massage', emoji: '💆' },
-  { code: 'mind', label: 'Cat mind', emoji: '🧠' },
-  { code: 'grooming', label: 'Grooming', emoji: '🪮' },
-  { code: 'health', label: 'Health', emoji: '❤️' },
+export const CATEGORIES: Array<{ code: string; label: string }> = [
+  { code: 'food', label: 'Food' },
+  { code: 'play', label: 'Play' },
+  { code: 'training', label: 'Training' },
+  { code: 'first-aid', label: 'First aid' },
+  { code: 'vet', label: 'Vet visits' },
+  { code: 'massage', label: 'Massage' },
+  { code: 'mind', label: 'Cat mind' },
+  { code: 'grooming', label: 'Grooming' },
+  { code: 'health', label: 'Health' },
 ]
 const categoryOf = (code: string) => CATEGORIES.find(c => c.code === code)
 
@@ -44,12 +44,12 @@ export function LearnPage() {
       <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Topics">
         <TopicChip active={!cat} onClick={() => setParams({}, { replace: true })}>All</TopicChip>
         {CATEGORIES.filter(c => present.has(c.code)).map(c => (
-          <TopicChip key={c.code} active={cat === c.code} onClick={() => setParams({ c: c.code }, { replace: true })}>{c.emoji} {c.label}</TopicChip>
+          <TopicChip key={c.code} active={cat === c.code} onClick={() => setParams({ c: c.code }, { replace: true })}>{c.label}</TopicChip>
         ))}
       </div>
 
       {articles.isLoading ? <Spinner className="py-10" /> : articles.error ? <ErrorNote message={friendlyError(articles.error)} />
-        : list.length === 0 ? <EmptyState emoji="📚" title="No articles found" body={q ? 'Try another word.' : undefined} />
+        : list.length === 0 ? <EmptyState icon={BookOpen} title="No articles found" body={q ? 'Try another word.' : undefined} />
         : (
           <div className="mt-4 space-y-3">
             {urgent.map(a => <ArticleRow key={a.slug} a={a} />)}
@@ -75,13 +75,13 @@ function ArticleRow({ a }: { a: Article }) {
   return (
     <Link to={`/learn/${a.slug}`} className="block">
       <Card className={cx('flex items-center gap-3', a.urgent && 'bg-red-50/60 ring-red-100')}>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-2xl" aria-hidden>{a.icon ?? c?.emoji ?? '📖'}</span>
+        <IconTile icon={(TOPIC[a.category] ?? TOPIC.health).icon} tone={(TOPIC[a.category] ?? TOPIC.health).tone} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="font-semibold leading-snug">{a.title}</div>
           <div className="mt-0.5 line-clamp-2 text-sm text-stone-500">{a.summary}</div>
           <div className="mt-1 text-[11px] font-medium text-stone-400">{a.urgent ? 'Urgent · ' : ''}{c?.label ?? a.category} · {a.read_minutes} min read</div>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-stone-300" />
+        <CaretRight className="h-4 w-4 shrink-0 text-stone-300" />
       </Card>
     </Link>
   )
@@ -109,14 +109,14 @@ export function ArticlePage() {
   const blocks = useMemo(() => (a ? parseMarkdown(a.body_md) : []), [a])
   if (isLoading) return <Spinner className="py-10" />
   if (error) return <ErrorNote message={friendlyError(error)} />
-  if (!a) return <div><PageHeader title="Learn" back="/learn" /><EmptyState emoji="📚" title="Article not found" /></div>
+  if (!a) return <div><PageHeader title="Learn" back="/learn" /><EmptyState icon={BookOpen} title="Article not found" /></div>
   const c = categoryOf(a.category)
   const related = (all.data ?? []).filter(x => x.category === a.category && x.slug !== a.slug).slice(0, 2)
 
   return (
     <article>
       <PageHeader title={c?.label ?? 'Learn'} back={`/learn${c ? `?c=${c.code}` : ''}`} />
-      <div className="text-4xl" aria-hidden>{a.icon ?? c?.emoji ?? '📖'}</div>
+      <IconTile icon={(TOPIC[a.category] ?? TOPIC.health).icon} tone={(TOPIC[a.category] ?? TOPIC.health).tone} size="xl" />
       <h1 className="mt-2 text-2xl font-black leading-tight">{a.title}</h1>
       <div className="mt-2 flex flex-wrap gap-2">
         {a.urgent && <Chip tone="bad">Urgent</Chip>}

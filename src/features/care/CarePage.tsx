@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Check, Plus } from 'lucide-react'
+import { Check, Plus, CalendarCheck } from '../../components/icons'
 import { useAuth } from '../../auth/AuthProvider'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, EmptyState, ErrorNote, Field, Input, Select, Sheet, Spinner, cx } from '../../components/ui'
@@ -12,7 +12,20 @@ import { useMembers } from '../household/api'
 import { useCareTasks, useCompleteCareTask, useSaveCareTask } from './api'
 import type { CareTask } from '../../lib/types'
 
-const KINDS = ['feeding', 'litter', 'grooming', 'medication', 'vaccination', 'parasite', 'vet', 'play', 'cleaning', 'other']
+const KINDS: { value: CareTask['kind']; label: string }[] = [
+  { value: 'flea_tick', label: 'Flea & tick' }, { value: 'deworming', label: 'Deworming' }, { value: 'grooming', label: 'Grooming' },
+  { value: 'nail_trim', label: 'Nail trim' }, { value: 'vaccination', label: 'Vaccination' }, { value: 'vet_visit', label: 'Vet visit' },
+  { value: 'dental', label: 'Dental' }, { value: 'medication', label: 'Medication' }, { value: 'custom', label: 'Custom' },
+]
+
+export const TASK_PRESETS: { name: string; kind: CareTask['kind']; frequency_days: number }[] = [
+  { name: 'Nail trim', kind: 'nail_trim', frequency_days: 21 },
+  { name: 'Litter box full clean', kind: 'custom', frequency_days: 7 },
+  { name: 'Parasite prevention', kind: 'flea_tick', frequency_days: 30 },
+  { name: 'Water fountain clean', kind: 'custom', frequency_days: 7 },
+  { name: 'Brushing', kind: 'grooming', frequency_days: 7 },
+  { name: 'Annual check-up', kind: 'vet_visit', frequency_days: 365 },
+]
 
 export function CarePage() {
   const { current, canEdit } = useHousehold()
@@ -25,7 +38,7 @@ export function CarePage() {
   const name = (id: string | null) => cats.data?.find(c => c.cat_id === id)?.name ?? 'Household'
 
   async function done(t: CareTask) {
-    try { await complete.mutateAsync(t); toast.show(`+15 XP · ${t.name} done`, 'xp') } catch (e) { toast.show(friendlyError(e), 'bad') }
+    try { await complete.mutateAsync(t); toast.show(`✓ ${t.name} done${t.frequency_days ? `, next in ${t.frequency_days} days` : ''}`, 'ok') } catch (e) { toast.show(friendlyError(e), 'bad') }
   }
 
   const groups = [
@@ -38,7 +51,7 @@ export function CarePage() {
     <div>
       <PageHeader title="Care schedule" back="/more" action={canEdit && <Button className="px-3" onClick={() => setEditing({})}><Plus className="h-4 w-4" />Task</Button>} />
       {tasks.isLoading ? <Spinner /> : !tasks.data?.length ? (
-        <EmptyState emoji="📋" title="No recurring tasks" body="Nail trims, litter deep-cleans, flea drops. Set it once, get reminded forever." action={canEdit && <Button onClick={() => setEditing({})}>Add a task</Button>} />
+        <EmptyState icon={CalendarCheck} title="No recurring tasks yet" body="Nail trims, litter box cleans, parasite prevention. Set the rhythm once and PawLog reminds you when each is due." action={canEdit && <Button onClick={() => setEditing({})}>Add a task</Button>} />
       ) : groups.map(g => {
         const items = tasks.data!.filter(g.f)
         if (!items.length) return null
@@ -75,7 +88,7 @@ function TaskSheet({ task, onClose }: { task: Partial<CareTask>; onClose: () => 
   const members = useMembers(hid)
   const save = useSaveCareTask(hid)
   const toast = useToast()
-  const [f, setF] = useState({ name: task.name ?? '', kind: task.kind ?? 'other', cat_id: task.cat_id ?? '', frequency_days: task.frequency_days?.toString() ?? '30',
+  const [f, setF] = useState({ name: task.name ?? '', kind: task.kind ?? 'custom', cat_id: task.cat_id ?? '', frequency_days: task.frequency_days?.toString() ?? '30',
     next_due_on: task.next_due_on ?? todayInput(), assigned_to: task.assigned_to ?? user!.id, reminder_enabled: task.reminder_enabled ?? true, active: task.active ?? true })
   const [error, setError] = useState<string | null>(null)
   const set = (k: keyof typeof f, v: string | boolean) => setF(s => ({ ...s, [k]: v }))
@@ -91,8 +104,19 @@ function TaskSheet({ task, onClose }: { task: Partial<CareTask>; onClose: () => 
   return (
     <Sheet open onClose={onClose} title={task.id ? 'Edit task' : 'New task'}>
       <form onSubmit={submit} className="grid grid-cols-2 gap-3">
-        <Field label="Task" className="col-span-2"><Input value={f.name} onChange={e => set('name', e.target.value)} placeholder="Nail trim" autoFocus /></Field>
-        <Field label="Kind"><Select value={f.kind} onChange={e => set('kind', e.target.value)}>{KINDS.map(k => <option key={k}>{k}</option>)}</Select></Field>
+        {!task.id && (
+          <div className="col-span-2">
+            <div className="mb-1.5 text-xs font-medium text-stone-500">Quick start</div>
+            <div className="flex flex-wrap gap-1.5">
+              {TASK_PRESETS.map(p => (
+                <button key={p.name} type="button" onClick={() => setF(s => ({ ...s, name: p.name, kind: p.kind, frequency_days: String(p.frequency_days) }))}
+                  className={cx('rounded-full border px-3 py-1 text-xs font-medium transition-colors', f.name === p.name ? 'border-paw-500 bg-paw-50 text-paw-700' : 'border-stone-200 text-stone-600 hover:border-paw-300')}>
+                  {p.name} · {p.frequency_days} d
+                </button>))}
+            </div>
+          </div>)}
+        <Field label="Task" className="col-span-2"><Input value={f.name} onChange={e => set('name', e.target.value)} placeholder="Nail trim" /></Field>
+        <Field label="Kind"><Select value={f.kind} onChange={e => set('kind', e.target.value)}>{KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</Select></Field>
         <Field label="Cat"><Select value={f.cat_id} onChange={e => set('cat_id', e.target.value)}><option value="">Whole household</option>{cats.data?.map(c => <option key={c.cat_id} value={c.cat_id}>{c.name}</option>)}</Select></Field>
         <Field label="Every (days)" hint="Blank = one-off"><Input type="number" inputMode="numeric" min={1} value={f.frequency_days} onChange={e => set('frequency_days', e.target.value)} /></Field>
         <Field label="Next due"><Input type="date" value={f.next_due_on} onChange={e => set('next_due_on', e.target.value)} /></Field>

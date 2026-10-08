@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Check, Plus, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CaretRight, Check, Clipboard, IconTile, Plus, Trash } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Sheet, Spinner, Textarea } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -37,12 +38,21 @@ export function HealthTab({ catId }: { catId: string }) {
   const h = useCatHealth(catId)
   const meds = useMedsToday(current!.id)
   const [editing, setEditing] = useState<{ table: Table; row?: Record<string, unknown> } | null>(null)
+  if (h.error) return <ErrorNote message={friendlyError(h.error)} />
   if (h.isLoading || !h.data) return <Spinner />
   const d = h.data
   const add = (table: Table) => canEdit && <button onClick={() => setEditing({ table })} className="flex items-center gap-1 rounded-full bg-paw-100 px-3 py-1.5 text-xs font-semibold text-paw-700"><Plus className="h-3.5 w-3.5" />Add</button>
   const due = (iso: string | null) => { const x = dueLabel(iso); return <Chip tone={x.tone === 'overdue' ? 'bad' : x.tone === 'soon' ? 'warn' : 'neutral'}>{x.text}</Chip> }
   return (
     <div className="space-y-5">
+      <Link to={`/more/vet-summary?cat=${catId}`} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/70 active:bg-stone-50">
+        <IconTile icon={Clipboard} tone="sky" />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold">Prepare a vet summary</div>
+          <div className="text-xs text-stone-500">Symptoms, appetite, weight and medications in one page</div>
+        </div>
+        <CaretRight className="h-4 w-4 text-stone-400" />
+      </Link>
       <p className="text-xs text-stone-500">Records for your vet conversations. PawLog does not diagnose.</p>
       <section>
         <SectionTitle action={add('cat_medications')}>Medications</SectionTitle>
@@ -145,7 +155,7 @@ function HealthSheet({ table, row, catId, hid, onClose }: { table: Table; row?: 
   return (
     <Sheet open onClose={onClose} title={`${row ? 'Edit' : 'Add'} ${def.title.toLowerCase()}`} footer={
       <div className="flex gap-2">
-        {row && <Button type="button" variant="danger" onClick={remove} loading={del.isPending} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>}
+        {row && <Button type="button" variant="danger" onClick={remove} loading={del.isPending} aria-label="Delete"><Trash className="h-4 w-4" /></Button>}
         <Button type="submit" form="health-form" className="flex-1 py-3 text-base" loading={save.isPending}>Save</Button>
       </div>}>
       <form id="health-form" onSubmit={submit} className="grid grid-cols-2 gap-3 pb-1">

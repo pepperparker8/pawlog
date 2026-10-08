@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react'
+import { Printer } from '../../components/icons'
 import { Button, Card, SectionTitle } from '../../components/ui'
 import { useCatHealth } from '../health/api'
 import { catAge, dateLabel } from '../../lib/format'

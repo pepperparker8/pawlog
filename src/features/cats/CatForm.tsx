@@ -8,7 +8,7 @@ import { friendlyError } from '../../lib/errors'
 import { useArchiveCat, useCat, useSaveCat, type CatInput } from './api'
 import { uploadPhoto } from '../photos/api'
 import { invalidateHousehold } from '../../lib/queryClient'
-import { Camera } from 'lucide-react'
+import { Camera } from '../../components/icons'
 import type { Cat } from '../../lib/types'
 import { useBreeds } from '../weight/api'
 

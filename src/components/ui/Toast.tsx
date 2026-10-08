@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 
-interface Toast { id: number; text: string; tone: 'ok' | 'xp' | 'bad' }
+interface Toast { id: number; text: string; tone: 'ok' | 'xp' | 'bad' | 'milestone' }
 const Ctx = createContext<{ show: (text: string, tone?: Toast['tone']) => void }>({ show: () => {} })
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -8,7 +8,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((text: string, tone: Toast['tone'] = 'ok') => {
     const id = Date.now() + Math.random()
     setItems(t => [...t, { id, text, tone }])
-    window.setTimeout(() => setItems(t => t.filter(x => x.id !== id)), tone === 'bad' ? 5000 : 2800)
+    window.setTimeout(() => setItems(t => t.filter(x => x.id !== id)), tone === 'bad' ? 5000 : tone === 'milestone' ? 4000 : 2800)
   }, [])
   const value = useMemo(() => ({ show }), [show])
   return (
@@ -16,8 +16,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div role="status" aria-live="polite" className="pointer-events-none safe-top fixed inset-x-0 z-[60] flex flex-col items-center gap-2 px-4">
         {items.map(t => (
-          <div key={t.id} className={`animate-pop max-w-sm rounded-2xl px-4 py-2 text-center text-sm font-semibold shadow-lg ${
-            t.tone === 'xp' ? 'bg-paw-500 text-white' : t.tone === 'bad' ? 'bg-red-600 text-white' : 'bg-stone-800 text-white'}`}>
+          <div key={t.id} className={`max-w-sm rounded-2xl px-4 py-2 text-center text-sm font-semibold shadow-lg ${
+            t.tone === 'milestone' ? 'animate-celebrate bg-white px-5 py-3 text-base text-stone-900 ring-1 ring-paw-200'
+            : t.tone === 'xp' ? 'animate-pop bg-paw-500 text-white' : t.tone === 'bad' ? 'animate-pop bg-red-600 text-white' : 'animate-pop bg-stone-800 text-white'}`}>
             {t.text}
           </div>
         ))}

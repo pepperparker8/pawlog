@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
+import { Trash, History, CareTile, Search } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries } from '../cats/api'
 import { Button, Card, EmptyState, Select, Spinner, cx } from '../../components/ui'
@@ -46,7 +46,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
 
   return (
     <div>
-      {!embedded && <PageHeader title="Timeline" subtitle="Everything, in order" />}
+      {!embedded && <PageHeader title="Timeline" subtitle="Everything, in order" action={<Link to="/more/search" aria-label="Search" className="rounded-full p-2.5 text-stone-600 hover:bg-stone-100"><Search size={22} /></Link>} />}
       <div className="mb-3 flex gap-2">
         {!catId && (
           <Select value={cat} onChange={e => setCat(e.target.value)} className="w-auto flex-1 py-2 text-sm">
@@ -61,7 +61,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
         ))}
       </div>
       {q.isLoading ? <Spinner /> : events.length === 0 ? (
-        <EmptyState emoji="📖" title="Nothing here yet" body="Tap + to log a meal, a weigh-in or a moment. The story starts with one entry." />
+        <EmptyState icon={History} title="Nothing here yet" body="Tap + to log a meal, a weigh-in or a moment. The story starts with one entry." />
       ) : (
         <div className="space-y-4">
           {byDay.map(([day, items]) => (
@@ -70,7 +70,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
               <Card className="divide-y divide-stone-100 p-0">
                 {items.map(e => (
                   <div key={e.kind + e.id} className="flex items-start gap-3 px-3 py-2.5">
-                    <span className="mt-0.5 text-lg">{KIND_META[e.kind]?.emoji ?? '•'}</span>
+                    <CareTile kind={e.kind} size="sm" className="mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
                         <span className="truncate text-sm font-medium">{e.title}</span>
@@ -82,7 +82,7 @@ export function TimelinePage({ catId, embedded = false }: { catId?: string; embe
                     <div className="flex flex-col items-end gap-1">
                       <span className="text-xs text-stone-400">{timeLabel(e.occurred_at)}</span>
                       {canEdit && e.kind !== 'milestone' && e.kind !== 'care_task' && (
-                        <button onClick={() => void remove(e)} className="rounded p-1 text-stone-300 hover:text-red-500" aria-label="Delete"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => void remove(e)} className="rounded p-1 text-stone-300 hover:text-red-500" aria-label="Delete"><Trash className="h-3.5 w-3.5" /></button>
                       )}
                     </div>
                   </div>

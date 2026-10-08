@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Copy, Plus, Trash2 } from 'lucide-react'
+import { Copy, Plus, Trash } from '../../components/icons'
 import { useAuth } from '../../auth/AuthProvider'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Sheet, Spinner } from '../../components/ui'
@@ -73,7 +73,7 @@ export function HouseholdPage() {
                     <Select value={m.role} className="w-auto py-1 text-xs" onChange={e => updateRole.mutateAsync({ userId: m.user_id, role: e.target.value as HouseholdRole }).catch(err => toast.show(friendlyError(err), 'bad'))}>
                       <option value="owner">owner</option><option value="caregiver">caregiver</option><option value="viewer">viewer</option>
                     </Select>
-                    <button onClick={() => confirm('Remove this member?') && removeMember.mutateAsync(m.user_id).catch(err => toast.show(friendlyError(err), 'bad'))} className="p-1 text-stone-300 hover:text-red-500" aria-label="Remove"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => confirm('Remove this member?') && removeMember.mutateAsync(m.user_id).catch(err => toast.show(friendlyError(err), 'bad'))} className="p-1 text-stone-300 hover:text-red-500" aria-label="Remove"><Trash className="h-4 w-4" /></button>
                   </>
                 ) : <Chip tone={m.role === 'owner' ? 'brand' : 'neutral'}>{m.role}</Chip>}
               </div>

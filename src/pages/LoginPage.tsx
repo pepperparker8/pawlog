@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { Button, ErrorNote, Field, Input } from '../components/ui'
 import { friendlyError } from '../lib/errors'
 import { supabaseConfigured } from '../lib/supabase'
+import { IconTile, Cat } from '../components/icons'
 
 // Same flow as the email: tap the link on this device, or type the code it contains.
 export function LoginPage() {
@@ -28,7 +29,7 @@ export function LoginPage() {
   return (
     <div className="mx-auto flex min-h-full max-w-sm flex-col justify-center px-6 py-10">
       <div className="mb-8 text-center">
-        <div className="text-6xl">🐾</div>
+        <IconTile icon={Cat} tone="paw" size="xl" className="mx-auto" />
         <h1 className="mt-2 text-3xl font-black text-paw-600">PawLog</h1>
         <p className="text-sm text-stone-500">Every cat. Every day. One shared log.</p>
       </div>

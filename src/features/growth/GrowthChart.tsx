@@ -7,6 +7,7 @@ import { kg, dateLabel, signedKg } from '../../lib/format'
 import { useWeightStatus } from '../weight/api'
 import { WeightStatusCard } from '../weight/WeightStatusCard'
 import { weightInsights } from './insights'
+import { Scales, Clipboard, CalendarCheck, Sprout, Target, Star, type Icon } from '../../components/icons'
 
 const RANGES = [{ label: '1M', days: 30 }, { label: '3M', days: 90 }, { label: '1Y', days: 365 }, { label: 'All', days: 0 }]
 
@@ -29,7 +30,7 @@ export function GrowthChart({ catId }: { catId: string }) {
   }, [w.data, weekly.data, range])
 
   if (w.isLoading) return <Spinner />
-  if (!w.data?.length) return <EmptyState emoji="⚖️" title="No weigh-ins yet" body="Log a weight and the growth curve starts here." />
+  if (!w.data?.length) return <EmptyState icon={Scales} title="No weigh-ins yet" body="Log a weight and the growth curve starts here." />
 
   const last = w.data[w.data.length - 1]
   const prev = w.data.length > 1 ? w.data[w.data.length - 2] : null
@@ -85,7 +86,7 @@ export function GrowthChart({ catId }: { catId: string }) {
           <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-stone-500">Milestones</div>
           <div className="flex flex-wrap gap-1">
             {[...ms.data].sort((a, b) => b.reached_at.localeCompare(a.reached_at)).map(m => (
-              <Chip key={m.id} tone="brand">{milestoneIcon(m.code)} {m.label} · {dateLabel(m.reached_at)}</Chip>
+              <Chip key={m.id} tone="brand"><MilestoneGlyph code={m.code} />{m.label} · {dateLabel(m.reached_at)}</Chip>
             ))}
           </div>
         </section>
@@ -104,11 +105,16 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub: 
   )
 }
 
-function milestoneIcon(code: string) {
-  if (code === 'first_weigh_in') return '🐾'
-  if (code.startsWith('weighins_')) return '📒'
-  if (code.startsWith('tracked_')) return '📅'
-  if (code.startsWith('weight_')) return '🍼'
-  if (code.includes('range')) return '🎯'
-  return '⭐'
+function milestoneIcon(code: string): Icon {
+  if (code === 'first_weigh_in') return Scales
+  if (code.startsWith('weighins_')) return Clipboard
+  if (code.startsWith('tracked_')) return CalendarCheck
+  if (code.startsWith('weight_')) return Sprout
+  if (code.includes('range')) return Target
+  return Star
+}
+
+function MilestoneGlyph({ code }: { code: string }) {
+  const I = milestoneIcon(code)
+  return <I size={14} weight="duotone" aria-hidden />
 }

@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { supabase } from '../../lib/supabase'
+import { supabase, untypedDb } from '../../lib/supabase'
 import { keys, queryClient, invalidateHousehold } from '../../lib/queryClient'
+import { useToast } from '../../components/ui/Toast'
 import type { Notification } from '../../lib/types'
+
+const CELEBRATE = new Set(['level_up', 'badge'])
 
 export function useNotifications(uid: string) {
   return useQuery({
@@ -29,6 +32,7 @@ export function useMarkRead(uid: string) {
 
 /** Realtime: refresh household queries when any member writes, and personal notifications. */
 export function useRealtime(hid: string | null, uid: string | null) {
+  const { show } = useToast()
   useEffect(() => {
     if (!hid || !uid) return
     const ch = supabase.channel(`household:${hid}`)
@@ -38,10 +42,34 @@ export function useRealtime(hid: string | null, uid: string | null) {
     const bump = () => { window.clearTimeout(t); t = window.setTimeout(() => invalidateHousehold(hid), 400) }
     for (const table of tables) ch.on('postgres_changes', { event: '*', schema: 'public', table, filter: `household_id=eq.${hid}` }, bump)
     ch.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` },
-      () => void queryClient.invalidateQueries({ queryKey: keys.notifications(uid) }))
+      payload => {
+        void queryClient.invalidateQueries({ queryKey: keys.notifications(uid) })
+        const n = payload.new as Partial<Notification>
+        if (n.kind && CELEBRATE.has(n.kind) && n.title) show(`🏆 ${n.title}`, 'milestone')
+      })
     ch.on('postgres_changes', { event: '*', schema: 'public', table: 'user_stats', filter: `user_id=eq.${uid}` },
       () => void queryClient.invalidateQueries({ queryKey: keys.stats(uid) }))
     ch.subscribe()
     return () => { void supabase.removeChannel(ch) }
+  }, [hid, uid, show])
+}
+
+const REFRESH_GAP_MS = 30 * 60 * 1000
+
+/** Creates due care, vaccination and parasite reminders when the app opens or returns after a gap. */
+export function useReminderRefresh(hid: string | null, uid: string | null) {
+  useEffect(() => {
+    if (!hid || !uid) return
+    let last = 0
+    const run = async () => {
+      if (Date.now() - last < REFRESH_GAP_MS) return
+      last = Date.now()
+      const { data, error } = await untypedDb.rpc('refresh_reminders', { p_household: hid })
+      if (!error && Number(data) > 0) void queryClient.invalidateQueries({ queryKey: keys.notifications(uid) })
+    }
+    void run()
+    const onVisible = () => { if (document.visibilityState === 'visible') void run() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [hid, uid])
 }

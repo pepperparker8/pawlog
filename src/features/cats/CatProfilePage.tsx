@@ -12,9 +12,11 @@ import { useGiveDose, useMedsToday } from '../health/api'
 import { PhotoGrid } from '../photos/PhotoGrid'
 import { PhotoPicker } from '../photos/PhotoPicker'
 import { PassportTab } from './PassportTab'
+import { AskTab } from '../ask/AskTab'
 import { WeightStatusCard } from '../weight/WeightStatusCard'
 import { TipsCard } from '../tips/TipsCard'
 import { WeeklyGoals } from '../gamification/WeeklyGoals'
+import { useXpEnabled } from '../../lib/prefs'
 import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { ago, catAge, courseDay, dueLabel, isTodayIso, kg, timeLabel } from '../../lib/format'
 import { friendlyError } from '../../lib/errors'
@@ -22,7 +24,7 @@ import type { CatSummary } from '../../lib/types'
 
 const GrowthChart = lazy(() => import('../growth/GrowthChart').then(m => ({ default: m.GrowthChart })))
 
-const TABS = [['', 'Overview'], ['health', 'Health'], ['growth', 'Growth'], ['photos', 'Photos'], ['timeline', 'Timeline'], ['passport', 'Passport']] as const
+const TABS = [['', 'Overview'], ['ask', 'Ask'], ['health', 'Health'], ['growth', 'Growth'], ['photos', 'Photos'], ['timeline', 'Timeline'], ['passport', 'Passport']] as const
 const ACTIONS: Array<{ kind: Kind; label: string }> = [
   { kind: 'feeding', label: 'Feed' }, { kind: 'weight', label: 'Weigh' }, { kind: 'litter', label: 'Litter' },
   { kind: 'medication', label: 'Meds' }, { kind: 'symptom', label: 'Observe' },
@@ -102,11 +104,12 @@ export function CatProfilePage() {
         )}
       </header>
 
-      <TabBar id={id} active={tab} />
+      <TabBar id={id} active={tab} ask={!!current?.ai_enabled} />
 
       <div className="pt-4">
         <Routes>
           <Route index element={<Overview id={id} hid={hid} s={s} canLog={live} onLog={kind => setLog({ kind })} />} />
+          {current?.ai_enabled && <Route path="ask" element={<AskTab catId={id} catName={c.name} />} />}
           <Route path="health" element={<HealthTab catId={id} />} />
           <Route path="growth" element={<Suspense fallback={<Spinner />}><GrowthChart catId={id} /></Suspense>} />
           <Route path="photos" element={<PhotoGrid catId={id} />} />
@@ -121,14 +124,14 @@ export function CatProfilePage() {
 }
 
 /** Absolute links: relative ones resolve against the current splat URL in React Router 7 and stack up (/health/growth). */
-function TabBar({ id, active }: { id: string; active: string }) {
+function TabBar({ id, active, ask }: { id: string; active: string; ask: boolean }) {
   const bar = useRef<HTMLDivElement>(null)
   useEffect(() => {
     bar.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
   }, [active])
   return (
     <nav ref={bar} aria-label="Cat sections" className="scrollbar-none sticky top-0 z-30 -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 bg-white/95 px-3 py-1.5 backdrop-blur">
-      {TABS.map(([path, label]) => (
+      {TABS.filter(([path]) => ask || path !== 'ask').map(([path, label]) => (
         <NavLink key={path} to={`/cats/${id}${path ? `/${path}` : ''}`} end replace
           className={({ isActive }) => cx('shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition', isActive ? 'bg-stone-800 text-white' : 'text-stone-600 active:bg-stone-200')}>
           {label}
@@ -172,6 +175,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
   const meds = useMedsToday(hid)
   const give = useGiveDose(hid)
   const toast = useToast()
+  const xp = useXpEnabled()
   const recent = useTimeline(hid, { catId: id })
   if (!s) return <Spinner />
   const catMeds = (meds.data ?? []).filter(m => m.cat_id === id)
@@ -197,7 +201,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
             return (
               <TodayRow key={m.id} kind="medication" label={m.name} done={done}
                 detail={[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${m.given_today}/${target} today`].filter(Boolean).join(' · ')}
-                actionLabel="Give" action={canLog && !done ? () => give.mutateAsync(m).then(() => toast.show(`💊 ${m.name} dose recorded`, 'xp')).catch(e => toast.show(friendlyError(e), 'bad')) : undefined} />
+                actionLabel="Give" action={canLog && !done ? () => give.mutateAsync(m).then(() => toast.show(`${m.name} dose recorded`)).catch(e => toast.show(friendlyError(e), 'bad')) : undefined} />
             )
           })}
         </Card>
@@ -229,7 +233,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
         </section>
       )}
 
-      <WeeklyGoals hid={hid} catId={id} />
+      {xp && <WeeklyGoals hid={hid} catId={id} />}
 
       <div className="grid grid-cols-2 gap-3">
         <Stat label="Weight" value={kg(s.last_weight_kg)} sub={s.last_weight_at ? `weighed ${ago(s.last_weight_at)}` : 'no weigh-in yet'} to={`/cats/${id}/growth`} />

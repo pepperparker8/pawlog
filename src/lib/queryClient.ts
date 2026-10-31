@@ -40,6 +40,8 @@ export const keys = {
   targets: (catId: string) => ['targets', catId] as const,
   tips: () => ['tips'] as const,
   articles: () => ['articles'] as const,
+  checkins: (hid: string, days: number) => ['checkins', hid, days] as const,
+  ask: (catId: string) => ['ask', catId] as const,
 }
 
 /** Cat-scoped caches are keyed by cat id, so they are refreshed alongside the household. */

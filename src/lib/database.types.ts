@@ -85,6 +85,86 @@ export type Database = {
           },
         ]
       }
+      ask_messages: {
+        Row: {
+          answer: Json | null
+          cat_id: string
+          client_event_id: string | null
+          content: string
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          input_tokens: number | null
+          model: string | null
+          output_tokens: number | null
+          red_flag: string | null
+          role: string
+          urgency: string | null
+        }
+        Insert: {
+          answer?: Json | null
+          cat_id: string
+          client_event_id?: string | null
+          content: string
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          red_flag?: string | null
+          role: string
+          urgency?: string | null
+        }
+        Update: {
+          answer?: Json | null
+          cat_id?: string
+          client_event_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          red_flag?: string | null
+          role?: string
+          urgency?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ask_messages_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "ask_messages_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ask_messages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ask_messages_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -963,6 +1043,89 @@ export type Database = {
           },
         ]
       }
+      daily_checkins: {
+        Row: {
+          cat_id: string
+          checked_at: string
+          client_event_id: string | null
+          created_at: string
+          created_by: string
+          day: string
+          eating: string
+          energy: string
+          household_id: string
+          id: string
+          litter: string
+          note: string | null
+          tags: string[]
+          updated_at: string
+          vomiting: boolean
+        }
+        Insert: {
+          cat_id: string
+          checked_at?: string
+          client_event_id?: string | null
+          created_at?: string
+          created_by?: string
+          day: string
+          eating?: string
+          energy?: string
+          household_id: string
+          id?: string
+          litter?: string
+          note?: string | null
+          tags?: string[]
+          updated_at?: string
+          vomiting?: boolean
+        }
+        Update: {
+          cat_id?: string
+          checked_at?: string
+          client_event_id?: string | null
+          created_at?: string
+          created_by?: string
+          day?: string
+          eating?: string
+          energy?: string
+          household_id?: string
+          id?: string
+          litter?: string
+          note?: string | null
+          tags?: string[]
+          updated_at?: string
+          vomiting?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_checkins_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_checkins_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feeding_logs: {
         Row: {
           amount: number | null
@@ -1388,6 +1551,7 @@ export type Database = {
       }
       households: {
         Row: {
+          ai_enabled: boolean
           created_at: string
           created_by: string
           id: string
@@ -1395,6 +1559,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_enabled?: boolean
           created_at?: string
           created_by?: string
           id?: string
@@ -1402,6 +1567,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_enabled?: boolean
           created_at?: string
           created_by?: string
           id?: string
@@ -2987,6 +3153,7 @@ export type Database = {
       accept_invite: {
         Args: { p_token: string }
         Returns: {
+          ai_enabled: boolean
           created_at: string
           created_by: string
           id: string
@@ -3052,6 +3219,7 @@ export type Database = {
       create_household: {
         Args: { p_name: string }
         Returns: {
+          ai_enabled: boolean
           created_at: string
           created_by: string
           id: string
@@ -3132,6 +3300,7 @@ export type Database = {
         }[]
       }
       refill_streak_freezes: { Args: never; Returns: undefined }
+      refresh_reminders: { Args: { p_household: string }; Returns: number }
       search_household: {
         Args: { p_household: string; p_query: string }
         Returns: {
@@ -3144,6 +3313,10 @@ export type Database = {
         }[]
       }
       seed_demo_household: { Args: { p_name?: string }; Returns: string }
+      sweep_household_reminders: {
+        Args: { p_household: string }
+        Returns: number
+      }
       sweep_reminders: { Args: never; Returns: number }
       week_start_of: { Args: { p_at: string }; Returns: string }
       weekly_quest_progress: {

@@ -50,6 +50,7 @@ export const CARE = {
   parasite: { icon: G.parasite, tone: 'emerald' },
   care_task: { icon: G.care_task, tone: 'emerald' },
   milestone: { icon: G.milestone, tone: 'paw' },
+  checkin: { icon: G.check, tone: 'emerald' },
   growth: { icon: G.growth, tone: 'emerald' },
   cat: { icon: G.cat, tone: 'paw' },
 } satisfies Record<string, { icon: Glyph; tone: Tone }>

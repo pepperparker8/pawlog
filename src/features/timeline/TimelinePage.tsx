@@ -11,12 +11,13 @@ import { deleteLog, KIND_TO_TABLE } from '../logs/api'
 import { invalidateHousehold } from '../../lib/queryClient'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
-import type { TimelineEvent, TimelineKind } from '../../lib/types'
+import type { CheckinTag, TimelineEvent, TimelineKind } from '../../lib/types'
+import { CHECKIN_TAGS } from '../checkins/api'
 
 const GROUPS: Array<{ label: string; kinds: TimelineKind[] }> = [
   { label: 'All', kinds: [] },
   { label: 'Health', kinds: ['symptom', 'medication', 'vet_visit', 'vaccination', 'parasite'] },
-  { label: 'Daily care', kinds: ['feeding', 'water', 'litter', 'grooming', 'activity', 'care_task'] },
+  { label: 'Daily care', kinds: ['checkin', 'feeding', 'water', 'litter', 'grooming', 'activity', 'care_task'] },
   { label: 'Growth', kinds: ['weight', 'milestone'] },
   { label: 'Memories', kinds: ['photo', 'journal', 'behavior'] },
 ]
@@ -127,6 +128,7 @@ function Detail({ e }: { e: TimelineEvent }) {
   if ((e.kind === 'grooming' || e.kind === 'activity') && d.duration_min) bits.push(`${d.duration_min} min`)
   if (e.kind === 'vaccination' && d.next_due_on) bits.push(`next ${d.next_due_on}`)
   if (e.kind === 'vet_visit' && d.cost) bits.push(`${d.cost}`)
+  if (e.kind === 'checkin' && Array.isArray(d.tags)) for (const t of d.tags) bits.push(CHECKIN_TAGS[t as CheckinTag] ?? String(t))
   if (!bits.length) return null
   return <div className="text-xs text-stone-400">{bits.join(' · ')}</div>
 }

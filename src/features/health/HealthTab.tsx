@@ -109,7 +109,7 @@ function GiveDose({ med, hid }: { med: MedToday; hid: string }) {
   const target = med.times_per_day ?? 1
   const done = med.given_today >= target
   return (
-    <button disabled={give.isPending} onClick={e => { e.stopPropagation(); give.mutateAsync(med).then(() => toast.show(`💊 ${med.name} dose recorded`, 'xp')).catch(err => toast.show(friendlyError(err), 'bad')) }}
+    <button disabled={give.isPending} onClick={e => { e.stopPropagation(); give.mutateAsync(med).then(() => toast.show(`${med.name} dose recorded`, 'ok')).catch(err => toast.show(friendlyError(err), 'bad')) }}
       className={done ? 'flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700' : 'rounded-full bg-paw-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm active:scale-95'}>
       {done ? <><Check className="h-3.5 w-3.5" />{med.given_today}/{target} today</> : `Give dose${target > 1 ? ` ${med.given_today + 1}/${target}` : ''}`}
     </button>

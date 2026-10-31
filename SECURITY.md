@@ -34,7 +34,17 @@ Policies call `SECURITY DEFINER` helpers (`is_household_member`, `can_edit_house
 
 ## Health content
 
-PawLog does not produce diagnoses or health scores. Pattern alerts are threshold rules over logged data and always point the user to a veterinarian.
+PawLog does not produce diagnoses or health scores, including in Ask answers. Pattern alerts are threshold rules over logged data and always point the user to a veterinarian.
+
+## Ask PawLog
+
+- Off by default. Only the household owner can switch it on (`households.ai_enabled`).
+- The `ask` edge function runs every query with the caller's JWT, so RLS limits it to the caller's household. Viewers cannot ask.
+- Each question sends the selected cat's profile, last 30 days of check-ins and observations, recent weights, active medications, open conditions, the last 5 vet visits and recent Ask turns to the Anthropic API. No other cat or household data is sent.
+- `ANTHROPIC_API_KEY` is a Supabase function secret and never reaches the client.
+- Messages older than 30 days are deleted on the next question. Members can clear a cat's thread at any time.
+- A rolling 24-hour cap per household (`ASK_DAILY_CAP`, default 30) limits cost.
+- Red-flag wording in the question, or two days of not eating in check-ins, sets the answer to Emergency regardless of the model output. Answers carry no diagnosis or doses.
 
 ## Tests
 

@@ -66,5 +66,5 @@ export const KIND_META: Record<TimelineKind, { label: string }> = {
   grooming: { label: 'Grooming' }, behavior: { label: 'Behavior' }, activity: { label: 'Play' },
   journal: { label: 'Journal' }, photo: { label: 'Photo' }, vet_visit: { label: 'Vet visit' },
   vaccination: { label: 'Vaccination' }, parasite: { label: 'Parasite' }, care_task: { label: 'Care task' },
-  milestone: { label: 'Milestone' },
+  milestone: { label: 'Milestone' }, checkin: { label: 'Check-in' },
 }

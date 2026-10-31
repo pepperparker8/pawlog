@@ -2,16 +2,20 @@ import { Link } from 'react-router-dom'
 import { CaretRight, G, House, IconTile, SignOut, type Glyph, type Tone } from '../components/icons'
 import { useAuth } from '../auth/AuthProvider'
 import { useHousehold } from '../household/HouseholdProvider'
-import { Card } from '../components/ui'
+import { Card, cx } from '../components/ui'
 import { PageHeader } from '../components/layout/PageHeader'
 import { useNotifications } from '../features/notifications/api'
 import { LevelCard } from '../features/gamification/LevelCard'
+import { setXpEnabled, useXpEnabled } from '../lib/prefs'
+import { useSetAiEnabled } from '../features/ask/api'
 
 export function MorePage() {
   const { user, signOut } = useAuth()
-  const { current, memberships, switchTo, role } = useHousehold()
+  const { current, memberships, switchTo, role, isOwner } = useHousehold()
   const notif = useNotifications(user!.id)
   const unread = notif.data?.filter(n => !n.read_at).length ?? 0
+  const xp = useXpEnabled()
+  const setAi = useSetAiEnabled(current?.id ?? '')
 
   const items: Array<{ to: string; icon: Glyph; tone: Tone; label: string; badge?: number }> = [
     { to: '/more/care', icon: G.care_task, tone: 'emerald', label: 'Care schedule' },
@@ -21,15 +25,15 @@ export function MorePage() {
     { to: '/more/photos', icon: G.photo, tone: 'rose', label: 'Photo memories' },
     { to: '/more/foods', icon: G.feeding, tone: 'paw', label: 'Food profiles' },
     { to: '/learn', icon: G.book, tone: 'violet', label: 'Learn: care guides' },
-    { to: '/more/achievements', icon: G.milestone, tone: 'paw', label: 'Achievements & XP' },
+    ...(xp ? [{ to: '/more/achievements', icon: G.milestone, tone: 'paw' as Tone, label: 'Achievements & XP' }] : []),
     { to: '/more/household', icon: G.users, tone: 'stone', label: 'Household & members' },
   ]
 
   return (
     <div>
       <PageHeader title="More" subtitle={user?.email} />
-      <LevelCard />
-      <Card className="mt-4 divide-y divide-stone-100 p-0">
+      {xp && <LevelCard />}
+      <Card className={cx('divide-y divide-stone-100 p-0', xp && 'mt-4')}>
         {items.map(({ to, icon, tone, label, badge }) => (
           <Link key={to} to={to} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-stone-50 active:bg-stone-100">
             <IconTile icon={icon} tone={tone} size="sm" />
@@ -38,6 +42,21 @@ export function MorePage() {
             <CaretRight className="h-4 w-4 text-stone-400" />
           </Link>
         ))}
+      </Card>
+      <Card className="mt-4 p-0">
+        <label className="flex items-center gap-3 px-4 py-3">
+          <IconTile icon={G.star} tone="paw" size="sm" />
+          <span className="flex-1 font-medium">Levels and quests</span>
+          <input type="checkbox" role="switch" checked={xp} onChange={e => setXpEnabled(e.target.checked)} className="h-5 w-5 accent-paw-500" />
+        </label>
+        {isOwner && current && (
+          <label className="flex items-center gap-3 border-t border-stone-100 px-4 py-3">
+            <IconTile icon={G.book} tone="violet" size="sm" />
+            <span className="flex-1 font-medium">Ask PawLog</span>
+            <input type="checkbox" role="switch" checked={current.ai_enabled} disabled={setAi.isPending}
+              onChange={e => setAi.mutate(e.target.checked)} className="h-5 w-5 accent-paw-500" />
+          </label>
+        )}
       </Card>
       {memberships.length > 1 && (
         <Card className="mt-4">

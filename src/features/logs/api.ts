@@ -65,7 +65,7 @@ export const KIND_TO_TABLE: Record<string, string> = {
   weight: 'weight_logs', feeding: 'feeding_logs', water: 'water_logs', litter: 'litter_logs', symptom: 'symptom_logs',
   medication: 'medication_logs', grooming: 'grooming_logs', behavior: 'behavior_logs', activity: 'activity_logs',
   journal: 'journal_entries', photo: 'photos', vet_visit: 'vet_visits', vaccination: 'vaccination_records',
-  parasite: 'parasite_treatments', care_task: 'care_task_completions',
+  parasite: 'parasite_treatments', care_task: 'care_task_completions', checkin: 'daily_checkins',
 }
 
 export interface Award { xp: number; repeat: boolean }

@@ -3,7 +3,7 @@ export type CatSex = 'male' | 'female' | 'unknown'
 export type Severity = 'mild' | 'moderate' | 'severe'
 
 export interface Profile { id: string; display_name: string; avatar_path: string | null }
-export interface Household { id: string; name: string; created_by: string; created_at: string }
+export interface Household { id: string; name: string; created_by: string; created_at: string; ai_enabled: boolean }
 export interface HouseholdMember { household_id: string; user_id: string; role: HouseholdRole; joined_at: string; profiles?: Profile }
 
 export interface Cat {
@@ -27,11 +27,26 @@ export interface CatSummary {
 
 export type TimelineKind =
   | 'weight' | 'feeding' | 'water' | 'litter' | 'symptom' | 'medication' | 'grooming' | 'behavior'
-  | 'activity' | 'journal' | 'photo' | 'vet_visit' | 'vaccination' | 'parasite' | 'care_task' | 'milestone'
+  | 'activity' | 'journal' | 'photo' | 'vet_visit' | 'vaccination' | 'parasite' | 'care_task' | 'milestone' | 'checkin'
 
 export interface TimelineEvent {
   id: string; household_id: string; cat_id: string | null; kind: TimelineKind; occurred_at: string
   title: string; detail: string | null; data: Record<string, unknown>; created_by: string | null; created_at: string
+}
+
+export type CheckinEating = 'usual' | 'less' | 'none'
+export type CheckinTag = 'visitors' | 'travel' | 'new_pet' | 'vet_visit' | 'routine_change'
+export interface DailyCheckin {
+  id: string; household_id: string; cat_id: string; day: string; checked_at: string
+  eating: CheckinEating; litter: 'usual' | 'changed'; vomiting: boolean; energy: 'usual' | 'low'
+  tags: CheckinTag[]; note: string | null
+}
+
+export type AskUrgency = 'none' | 'monitor' | 'book' | 'today' | 'emergency'
+export interface AskAnswer { urgency: AskUrgency; answer: string; watch: string[]; vet_questions: string[] }
+export interface AskMessage {
+  id: string; household_id: string; cat_id: string; role: 'user' | 'assistant'; content: string
+  urgency: AskUrgency | null; answer: AskAnswer | null; red_flag: string | null; created_by: string; created_at: string
 }
 
 export interface WeightLog { id: string; cat_id: string; logged_at: string; weight_kg: number; body_condition_score: number | null; body_condition_source: 'vet' | 'owner' | null; note: string | null }

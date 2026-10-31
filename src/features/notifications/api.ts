@@ -4,6 +4,7 @@ import { supabase, untypedDb } from '../../lib/supabase'
 import { keys, queryClient, invalidateHousehold } from '../../lib/queryClient'
 import { useToast } from '../../components/ui/Toast'
 import type { Notification } from '../../lib/types'
+import { readXpEnabled } from '../../lib/prefs'
 
 const CELEBRATE = new Set(['level_up', 'badge'])
 
@@ -45,7 +46,7 @@ export function useRealtime(hid: string | null, uid: string | null) {
       payload => {
         void queryClient.invalidateQueries({ queryKey: keys.notifications(uid) })
         const n = payload.new as Partial<Notification>
-        if (n.kind && CELEBRATE.has(n.kind) && n.title) show(`🏆 ${n.title}`, 'milestone')
+        if (n.kind && CELEBRATE.has(n.kind) && n.title && readXpEnabled()) show(`🏆 ${n.title}`, 'milestone')
       })
     ch.on('postgres_changes', { event: '*', schema: 'public', table: 'user_stats', filter: `user_id=eq.${uid}` },
       () => void queryClient.invalidateQueries({ queryKey: keys.stats(uid) }))

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { readXpEnabled } from '../../lib/prefs'
 import { CaretDown, CareTile, CareGlyph } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { useCatSummaries, useSignedUrl } from '../cats/api'
@@ -73,10 +74,11 @@ export function QuickLogSheet({ open, onClose, presetCat, presetKind }: { open: 
       if (kind === 'feeding' && f.food_type) rememberFoodType(f.food_type)
       if (r.queued) toast.show('Saved offline. It will sync when you are back online.')
       else {
-        const award = await fetchAward(r.ids)
         const who = selected.length > 1 ? ` for ${selected.length} cats` : ''
         const undo = () => undoLog(meta.table, r.ids).then(() => { invalidateHousehold(hid); toast.show('Removed') }, err => toast.show(friendlyError(err), 'bad'))
-        toast.show(`${meta.done}${who}${award.xp > 0 ? ` · +${award.xp} XP` : award.repeat ? ' · XP already earned for this today' : ''}`, award.xp > 0 ? 'xp' : 'ok', { label: 'Undo', run: () => void undo() })
+        const award = readXpEnabled() ? await fetchAward(r.ids) : null
+        const suffix = !award ? '' : award.xp > 0 ? ` · +${award.xp} XP` : award.repeat ? ' · XP already earned for this today' : ''
+        toast.show(`${meta.done}${who}${suffix}`, award && award.xp > 0 ? 'xp' : 'ok', { label: 'Undo', run: () => void undo() })
       }
       onClose()
     } catch (e) { setError(friendlyError(e)) }

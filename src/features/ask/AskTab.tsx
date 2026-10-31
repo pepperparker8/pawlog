@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { G } from '../../components/icons'
 import { Button, Card, Chip, EmptyState, ErrorNote, Spinner, Textarea, cx } from '../../components/ui'
 import { useHousehold } from '../../household/HouseholdProvider'
@@ -12,7 +13,8 @@ export function AskTab({ catId, catName }: { catId: string; catName: string }) {
   const msgs = useAskMessages(catId)
   const ask = useAsk(catId)
   const clear = useClearAsk(catId)
-  const [question, setQuestion] = useState('')
+  const draft = (useLocation().state as { draft?: string } | null)?.draft
+  const [question, setQuestion] = useState(draft ?? '')
   const [pending, setPending] = useState<{ question: string; eventId: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const end = useRef<HTMLDivElement>(null)

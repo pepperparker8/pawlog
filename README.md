@@ -12,6 +12,7 @@ PawLog records observations. It does not diagnose, score health, or replace a ve
 - Cat profile with timeline, health records, growth chart, photos and a printable passport
 - Unified timeline with filters and pagination
 - Health records: medications, conditions, vet visits, vaccinations, parasite treatments
+- Exception-only logging: off days and missed doses only; trends tab with weight chart, off-day bands, calendar, treatment courses and sourced insights
 - Care scheduler with recurring tasks and assignees
 - Food profiles, photo library in private Storage, global search, vet summary
 - Gamification: XP ledger, levels, badges, quests, forgiving streaks with freezes

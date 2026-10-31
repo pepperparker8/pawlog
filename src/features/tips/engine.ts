@@ -36,7 +36,7 @@ export interface CatProfile {
 
 /** Most important first. Hints are shown in this order. */
 export const TRIGGER_PRIORITY = [
-  'missed_medication', 'symptom_repeat', 'appetite_drop', 'weight_drop', 'litter_change', 'quiet_cat',
+  'missed_medication', 'symptom_repeat', 'appetite_drop', 'weight_drop', 'litter_change',
   'underweight', 'bcs_low', 'overweight', 'bcs_high', 'weight_gain',
   'vaccine_due', 'parasite_due', 'vet_visit_soon', 'no_weight_30d', 'no_grooming_14d', 'growing', 'new_cat',
 ] as const
@@ -46,7 +46,7 @@ const WEIGH_GAP_DAYS = 30
 const GROOM_GAP_DAYS = 14
 const NEW_CAT_DAYS = 14
 const DUE_SOON_DAYS = 14
-const PATTERN_CODES = new Set(['weight_drop', 'weight_gain', 'symptom_repeat', 'appetite_drop', 'litter_change', 'missed_medication', 'quiet_cat'])
+const PATTERN_CODES = new Set(['weight_drop', 'weight_gain', 'symptom_repeat', 'appetite_drop', 'litter_change', 'missed_medication'])
 
 const olderThan = (iso: string | null | undefined, days: number, now: Date) => !iso || now.getTime() - new Date(iso).getTime() > days * DAY
 const dueSoon = (iso: string | null | undefined, now: Date) => !!iso && new Date(iso).getTime() - now.getTime() <= DUE_SOON_DAYS * DAY

@@ -64,7 +64,12 @@ export interface CareTask {
 
 export interface CatMedication {
   id: string; cat_id: string; name: string; dose: string | null; frequency: string | null; times_per_day: number | null
-  start_on: string | null; end_on: string | null; reason: string | null; active: boolean
+  start_on: string | null; end_on: string | null; reason: string | null; active: boolean; course_id: string | null
+}
+export type CourseStatus = 'active' | 'completed' | 'stopped'
+export interface TreatmentCourse {
+  id: string; cat_id: string; condition_id: string | null; name: string; started_on: string; planned_days: number | null
+  review_on: string | null; status: CourseStatus; ended_on: string | null; note: string | null
 }
 export interface CatCondition { id: string; cat_id: string; name: string; noted_on: string | null; status: string; notes: string | null }
 export interface VetVisit {

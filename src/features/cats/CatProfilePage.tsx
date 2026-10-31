@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, CareTile, CareGlyph, IconTile, G } from '../../components/icons'
+import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, CareTile, CareGlyph, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, EmptyState, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -8,7 +8,7 @@ import { useCat, useCatSummaries, useSignedUrl } from './api'
 import { TimelinePage } from '../timeline/TimelinePage'
 import { useTimeline } from '../timeline/api'
 import { HealthTab } from '../health/HealthTab'
-import { useGiveDose, useMedsToday } from '../health/api'
+import { useMedsToday, useMissDose } from '../health/api'
 import { PhotoGrid } from '../photos/PhotoGrid'
 import { PhotoPicker } from '../photos/PhotoPicker'
 import { PassportTab } from './PassportTab'
@@ -22,12 +22,11 @@ import { ago, catAge, courseDay, dueLabel, isTodayIso, kg, timeLabel } from '../
 import { friendlyError } from '../../lib/errors'
 import type { CatSummary } from '../../lib/types'
 
-const GrowthChart = lazy(() => import('../growth/GrowthChart').then(m => ({ default: m.GrowthChart })))
+const TrendsView = lazy(() => import('../trends/TrendsView').then(m => ({ default: m.TrendsView })))
 
-const TABS = [['', 'Overview'], ['ask', 'Ask'], ['health', 'Health'], ['growth', 'Growth'], ['photos', 'Photos'], ['timeline', 'Timeline'], ['passport', 'Passport']] as const
+const TABS = [['', 'Overview'], ['ask', 'Ask'], ['health', 'Health'], ['trends', 'Trends'], ['photos', 'Photos'], ['timeline', 'Timeline'], ['passport', 'Passport']] as const
 const ACTIONS: Array<{ kind: Kind; label: string }> = [
-  { kind: 'feeding', label: 'Feed' }, { kind: 'weight', label: 'Weigh' }, { kind: 'litter', label: 'Litter' },
-  { kind: 'medication', label: 'Meds' }, { kind: 'symptom', label: 'Observe' },
+  { kind: 'weight', label: 'Weigh' }, { kind: 'medication', label: 'Meds' }, { kind: 'symptom', label: 'Observe' },
 ]
 
 export function CatProfilePage() {
@@ -91,7 +90,7 @@ export function CatProfilePage() {
           </div>
         </div>
         {live && (
-          <div className="mt-4 grid grid-cols-6 gap-1.5">
+          <div className="mt-4 grid grid-cols-4 gap-1.5">
             {ACTIONS.map(a => (
               <button key={a.kind} onClick={() => setLog({ kind: a.kind })} className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
                 <CareTile kind={a.kind} />{a.label}
@@ -108,14 +107,15 @@ export function CatProfilePage() {
 
       <div className="pt-4">
         <Routes>
-          <Route index element={<Overview id={id} hid={hid} s={s} canLog={live} onLog={kind => setLog({ kind })} />} />
+          <Route index element={<Overview id={id} hid={hid} s={s} canLog={live} />} />
           {current?.ai_enabled && <Route path="ask" element={<AskTab catId={id} catName={c.name} />} />}
           <Route path="health" element={<HealthTab catId={id} />} />
-          <Route path="growth" element={<Suspense fallback={<Spinner />}><GrowthChart catId={id} /></Suspense>} />
+          <Route path="trends" element={<Suspense fallback={<Spinner />}><TrendsView catId={id} catName={c.name} /></Suspense>} />
+          <Route path="growth" element={<Navigate to={`/cats/${id}/trends`} replace />} />
           <Route path="photos" element={<PhotoGrid catId={id} />} />
           <Route path="timeline" element={<TimelinePage catId={id} embedded />} />
           <Route path="passport" element={<PassportTab cat={c} />} />
-          <Route path="*" element={<Overview id={id} hid={hid} s={s} canLog={live} onLog={kind => setLog({ kind })} />} />
+          <Route path="*" element={<Overview id={id} hid={hid} s={s} canLog={live} />} />
         </Routes>
       </div>
       <QuickLogSheet open={!!log} onClose={() => setLog(null)} presetCat={id} presetKind={log?.kind} />
@@ -171,15 +171,14 @@ function Protection({ to, kind, label, ok, d }: { to: string; kind: 'vaccination
   )
 }
 
-function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: CatSummary; canLog: boolean; onLog: (k: Kind) => void }) {
+function Overview({ id, hid, s, canLog }: { id: string; hid: string; s?: CatSummary; canLog: boolean }) {
   const meds = useMedsToday(hid)
-  const give = useGiveDose(hid)
+  const miss = useMissDose(hid)
   const toast = useToast()
   const xp = useXpEnabled()
   const recent = useTimeline(hid, { catId: id })
   if (!s) return <Spinner />
   const catMeds = (meds.data ?? []).filter(m => m.cat_id === id)
-  const fed = isTodayIso(s.last_fed_at), litter = isTodayIso(s.last_litter_at)
   const due = [
     { label: 'Care task', d: dueLabel(s.next_task_due), to: '' },
   ].filter(x => x.d.tone !== 'none')
@@ -189,26 +188,26 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
 
   return (
     <div className="space-y-5">
-      <section>
-        <SectionTitle>Today</SectionTitle>
-        <Card className="divide-y divide-stone-100 p-0">
-          <TodayRow kind="feeding" label="Fed" done={fed} detail={fed ? ago(s.last_fed_at) : s.last_fed_at ? `Last ${ago(s.last_fed_at)}` : 'Not logged yet'} action={canLog && !fed ? () => onLog('feeding') : undefined} />
-          <TodayRow kind="litter" label="Litter" done={litter} detail={litter ? ago(s.last_litter_at) : s.last_litter_at ? `Last ${ago(s.last_litter_at)}` : 'Not logged yet'} action={canLog && !litter ? () => onLog('litter') : undefined} />
-          {catMeds.map(m => {
-            const target = m.times_per_day ?? 1
-            const done = m.given_today >= target
-            const cd = courseDay(m.start_on, m.end_on)
-            return (
-              <TodayRow key={m.id} kind="medication" label={m.name} done={done}
-                detail={[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${m.given_today}/${target} today`].filter(Boolean).join(' · ')}
-                actionLabel="Give" action={canLog && !done ? () => give.mutateAsync(m).then(() => toast.show(`${m.name} dose recorded`)).catch(e => toast.show(friendlyError(e), 'bad')) : undefined} />
-            )
-          })}
-        </Card>
-      </section>
+      {catMeds.length > 0 && (
+        <section>
+          <SectionTitle>Medication today</SectionTitle>
+          <Card className="divide-y divide-stone-100 p-0">
+            {catMeds.map(m => {
+              const target = m.times_per_day ?? 1
+              const cd = courseDay(m.start_on, m.end_on)
+              const left = target - m.missed_today
+              return (
+                <MedRow key={m.id} label={m.name} missed={m.missed_today}
+                  detail={[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${target}x a day`].filter(Boolean).join(' · ')}
+                  onMiss={canLog && left > 0 ? () => miss.mutateAsync(m).then(() => toast.show(`${m.name} dose marked missed`)).catch(e => toast.show(friendlyError(e), 'bad')) : undefined} />
+              )
+            })}
+          </Card>
+        </section>
+      )}
 
       <section>
-        <SectionTitle action={<Link to={`/cats/${id}/growth`} replace className="flex items-center text-xs font-semibold text-paw-600">Growth<CaretRight className="h-3.5 w-3.5" /></Link>}>Health journey</SectionTitle>
+        <SectionTitle action={<Link to={`/cats/${id}/trends`} replace className="flex items-center text-xs font-semibold text-paw-600">Trends<CaretRight className="h-3.5 w-3.5" /></Link>}>Health journey</SectionTitle>
         <div className="space-y-3">
           <WeightStatusCard catId={id} compact />
           <div className="grid grid-cols-2 gap-3">
@@ -236,7 +235,7 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
       {xp && <WeeklyGoals hid={hid} catId={id} />}
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat label="Weight" value={kg(s.last_weight_kg)} sub={s.last_weight_at ? `weighed ${ago(s.last_weight_at)}` : 'no weigh-in yet'} to={`/cats/${id}/growth`} />
+        <Stat label="Weight" value={kg(s.last_weight_kg)} sub={s.last_weight_at ? `weighed ${ago(s.last_weight_at)}` : 'no weigh-in yet'} to={`/cats/${id}/trends`} />
         <Stat label="Symptoms, 7 days" value={s.symptoms_7d ? String(s.symptoms_7d) : 'None'} sub={s.last_symptom_at ? `last ${ago(s.last_symptom_at)}` : 'nothing recorded'} to={`/cats/${id}/timeline`} />
         <Stat label="Grooming" value={s.last_grooming_at ? ago(s.last_grooming_at) : 'Not yet'} sub="last session" />
         <Stat label="Photos" value={String(s.photo_count)} sub="memories" to={`/cats/${id}/photos`} />
@@ -258,13 +257,13 @@ function Overview({ id, hid, s, canLog, onLog }: { id: string; hid: string; s?: 
   )
 }
 
-function TodayRow({ kind, label, done, detail, action, actionLabel = 'Log' }: { kind: string; label: string; done: boolean; detail: string; action?: () => void; actionLabel?: string }) {
+function MedRow({ label, detail, missed, onMiss }: { label: string; detail: string; missed: number; onMiss?: () => void }) {
   return (
     <div className="flex min-h-14 items-center gap-3 px-4 py-2">
-      {done ? <IconTile icon={G.check} tone="emerald" size="sm" className="h-9 w-9" /> : <CareTile kind={kind} size="sm" className="h-9 w-9" />}
+      <CareTile kind="medication" size="sm" className="h-9 w-9" />
       <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{label}</div><div className="truncate text-xs text-stone-500">{detail}</div></div>
-      {action ? <button onClick={action} className="rounded-full bg-paw-500 px-3.5 py-1.5 text-xs font-semibold text-white active:scale-95">{actionLabel}</button>
-        : done ? <Chip tone="ok">Done</Chip> : null}
+      {missed > 0 && <Chip tone="warn">{missed} missed</Chip>}
+      {onMiss && <button onClick={onMiss} className="rounded-full border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 active:scale-95">Missed</button>}
     </div>
   )
 }

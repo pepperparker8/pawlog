@@ -719,6 +719,7 @@ export type Database = {
         Row: {
           active: boolean
           cat_id: string
+          course_id: string | null
           created_at: string
           created_by: string
           dose: string | null
@@ -735,6 +736,7 @@ export type Database = {
         Insert: {
           active?: boolean
           cat_id: string
+          course_id?: string | null
           created_at?: string
           created_by?: string
           dose?: string | null
@@ -751,6 +753,7 @@ export type Database = {
         Update: {
           active?: boolean
           cat_id?: string
+          course_id?: string | null
           created_at?: string
           created_by?: string
           dose?: string | null
@@ -777,6 +780,13 @@ export type Database = {
             columns: ["cat_id"]
             isOneToOne: false
             referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cat_medications_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_courses"
             referencedColumns: ["id"]
           },
           {
@@ -1700,6 +1710,264 @@ export type Database = {
         }
         Relationships: []
       }
+      lab_reads: {
+        Row: {
+          cat_id: string
+          client_event_id: string
+          created_at: string
+          created_by: string
+          draft: Json | null
+          household_id: string
+          id: string
+          input_tokens: number | null
+          model: string | null
+          output_tokens: number | null
+        }
+        Insert: {
+          cat_id: string
+          client_event_id: string
+          created_at?: string
+          created_by?: string
+          draft?: Json | null
+          household_id: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+        }
+        Update: {
+          cat_id?: string
+          client_event_id?: string
+          created_at?: string
+          created_by?: string
+          draft?: Json | null
+          household_id?: string
+          id?: string
+          input_tokens?: number | null
+          model?: string | null
+          output_tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_reads_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "lab_reads_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reads_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_reports: {
+        Row: {
+          cat_id: string
+          client_event_id: string | null
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          lab_name: string | null
+          note: string | null
+          read_id: string | null
+          sampled_on: string
+          storage_path: string | null
+          updated_at: string
+          vet_visit_id: string | null
+        }
+        Insert: {
+          cat_id: string
+          client_event_id?: string | null
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          lab_name?: string | null
+          note?: string | null
+          read_id?: string | null
+          sampled_on: string
+          storage_path?: string | null
+          updated_at?: string
+          vet_visit_id?: string | null
+        }
+        Update: {
+          cat_id?: string
+          client_event_id?: string | null
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          lab_name?: string | null
+          note?: string | null
+          read_id?: string | null
+          sampled_on?: string
+          storage_path?: string | null
+          updated_at?: string
+          vet_visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_reports_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "lab_reports_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reports_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reports_read_id_fkey"
+            columns: ["read_id"]
+            isOneToOne: false
+            referencedRelation: "lab_reads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_reports_vet_visit_id_fkey"
+            columns: ["vet_visit_id"]
+            isOneToOne: false
+            referencedRelation: "vet_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lab_results: {
+        Row: {
+          about: string | null
+          analyte: string
+          analyte_key: string
+          cat_id: string
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          panel: string | null
+          position: number
+          printed_flag: string | null
+          ref_high: number | null
+          ref_low: number | null
+          ref_text: string | null
+          report_id: string
+          unit: string | null
+          value: number | null
+          value_text: string | null
+        }
+        Insert: {
+          about?: string | null
+          analyte: string
+          analyte_key: string
+          cat_id: string
+          created_at?: string
+          created_by?: string
+          household_id: string
+          id?: string
+          panel?: string | null
+          position?: number
+          printed_flag?: string | null
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          report_id: string
+          unit?: string | null
+          value?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          about?: string | null
+          analyte?: string
+          analyte_key?: string
+          cat_id?: string
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          panel?: string | null
+          position?: number
+          printed_flag?: string | null
+          ref_high?: number | null
+          ref_low?: number | null
+          ref_text?: string | null
+          report_id?: string
+          unit?: string | null
+          value?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_results_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "lab_results_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_results_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_results_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lab_results_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "lab_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       level_config: {
         Row: {
           level: number
@@ -2425,6 +2693,96 @@ export type Database = {
             columns: ["vet_visit_id"]
             isOneToOne: false
             referencedRelation: "vet_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_courses: {
+        Row: {
+          cat_id: string
+          client_event_id: string | null
+          condition_id: string | null
+          created_at: string
+          created_by: string
+          ended_on: string | null
+          household_id: string
+          id: string
+          name: string
+          note: string | null
+          planned_days: number | null
+          review_on: string | null
+          started_on: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cat_id: string
+          client_event_id?: string | null
+          condition_id?: string | null
+          created_at?: string
+          created_by?: string
+          ended_on?: string | null
+          household_id: string
+          id?: string
+          name: string
+          note?: string | null
+          planned_days?: number | null
+          review_on?: string | null
+          started_on: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cat_id?: string
+          client_event_id?: string | null
+          condition_id?: string | null
+          created_at?: string
+          created_by?: string
+          ended_on?: string | null
+          household_id?: string
+          id?: string
+          name?: string
+          note?: string | null
+          planned_days?: number | null
+          review_on?: string | null
+          started_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_courses_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cat_summaries"
+            referencedColumns: ["cat_id"]
+          },
+          {
+            foreignKeyName: "treatment_courses_cat_id_fkey"
+            columns: ["cat_id"]
+            isOneToOne: false
+            referencedRelation: "cats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_courses_condition_id_fkey"
+            columns: ["condition_id"]
+            isOneToOne: false
+            referencedRelation: "cat_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_courses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_courses_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
         ]
@@ -3301,6 +3659,7 @@ export type Database = {
       }
       refill_streak_freezes: { Args: never; Returns: undefined }
       refresh_reminders: { Args: { p_household: string }; Returns: number }
+      save_lab_report: { Args: { p: Json }; Returns: string }
       search_household: {
         Args: { p_household: string; p_query: string }
         Returns: {

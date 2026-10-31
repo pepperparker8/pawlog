@@ -9,7 +9,7 @@ import { useOnThisDay, usePatterns } from '../timeline/api'
 import { useQuests } from '../gamification/api'
 import { LevelCard } from '../gamification/LevelCard'
 import { WeeklyGoals } from '../gamification/WeeklyGoals'
-import { catAge, courseDay, dateLabel, dueLabel, isTodayIso, kg } from '../../lib/format'
+import { catAge, courseDay, dateLabel, dueLabel, kg } from '../../lib/format'
 import { useSeedDemo } from '../household/api'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
@@ -19,8 +19,8 @@ import { QuickLogSheet, type Kind } from '../logs/QuickLogSheet'
 import { useWeightStatus } from '../weight/api'
 import { statusView } from '../weight/status'
 import { HomeTip } from '../tips/TipsCard'
-import { useGiveDose, useMedsToday, type MedToday } from '../health/api'
-import { checkinFlags, localDay, useCheckins, useSaveCheckin, USUAL } from '../checkins/api'
+import { useMedsToday, useMissDose, type MedToday } from '../health/api'
+import { checkinFlags, localDay, useCheckins } from '../checkins/api'
 import { CheckinSheet } from '../checkins/CheckinSheet'
 import { attention, byAttention } from './attention'
 
@@ -35,8 +35,7 @@ export function HomePage() {
   const quests = useQuests(hid)
   const otd = useOnThisDay(hid)
   const seed = useSeedDemo()
-  const saveCheckin = useSaveCheckin(hid)
-  const give = useGiveDose(hid)
+  const miss = useMissDose(hid)
   const toast = useToast()
   const [log, setLog] = useState<{ catId: string; kind?: Kind } | null>(null)
   const [checkinCat, setCheckinCat] = useState<string | null>(null)
@@ -61,40 +60,23 @@ export function HomePage() {
   }
 
   const active = cats.data.filter(c => !c.archived_at)
-  const today = localDay()
-  const todays = checkins.data?.filter(c => c.day === today) ?? []
-  const unchecked = active.filter(c => !todays.some(k => k.cat_id === c.cat_id))
   const act = patterns.data?.filter(p => p.severity !== 'info') ?? []
   const info = patterns.data?.filter(p => p.severity === 'info') ?? []
   const questsDone = quests.data?.filter(q => q.completed).length ?? 0
 
-  const allUsual = (catIds: string[]) => saveCheckin.mutateAsync({ catIds, day: today, draft: USUAL })
-    .then(() => toast.show(catIds.length > 1 ? `All usual for ${catIds.length} cats` : 'All usual'))
-    .catch(e => toast.show(friendlyError(e), 'bad'))
-  const giveDose = (m: MedToday) => give.mutateAsync(m)
-    .then(() => toast.show(`${m.name} dose recorded`))
+  const missDose = (m: MedToday) => miss.mutateAsync(m)
+    .then(() => toast.show(`${m.name} dose marked missed`))
     .catch(e => toast.show(friendlyError(e), 'bad'))
   const cardProps = (c: CatSummary) => ({
-    cat: c, canEdit, busy: saveCheckin.isPending || give.isPending,
+    cat: c, canEdit, busy: miss.isPending,
     week: checkins.data?.filter(k => k.cat_id === c.cat_id) ?? [],
     meds: meds.data?.filter(m => m.cat_id === c.cat_id) ?? [],
-    onCheckin: () => setCheckinCat(c.cat_id), onAllUsual: () => allUsual([c.cat_id]),
-    onGive: giveDose, onLog: (kind?: Kind) => setLog({ catId: c.cat_id, kind }),
+    onOffDay: () => setCheckinCat(c.cat_id), onMiss: missDose, onLog: (kind?: Kind) => setLog({ catId: c.cat_id, kind }),
   })
 
   return (
     <div className="space-y-5">
-      <header className="flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="truncate text-2xl font-black">{current!.name}</h1>
-          {checkins.data && <p className="text-sm text-stone-500">{active.length - unchecked.length}/{active.length} checked in today</p>}
-        </div>
-        {canEdit && checkins.data && unchecked.length > 1 && (
-          <Button variant="secondary" className="shrink-0 px-3 py-2 text-xs" loading={saveCheckin.isPending} onClick={() => allUsual(unchecked.map(c => c.cat_id))}>
-            All usual for {unchecked.length}
-          </Button>
-        )}
-      </header>
+      <h1 className="truncate text-2xl font-black">{current!.name}</h1>
 
       {active.length <= HERO_MAX ? (
         <section className="space-y-3">
@@ -174,7 +156,7 @@ export function HomePage() {
       )}
 
       {log && <QuickLogSheet key={log.catId + (log.kind ?? '')} open onClose={() => setLog(null)} presetCat={log.catId} presetKind={log.kind} />}
-      {checkinCat && <CheckinSheet key={checkinCat} hid={hid} cats={active} catId={checkinCat} today={todays} onClose={() => setCheckinCat(null)} />}
+      {checkinCat && <CheckinSheet key={checkinCat} hid={hid} cats={active} catId={checkinCat} existing={checkins.data ?? []} onClose={() => setCheckinCat(null)} />}
     </div>
   )
 }
@@ -182,13 +164,13 @@ export function HomePage() {
 // Most households have one or two cats: give each a full card. Larger households get a compact list.
 const HERO_MAX = 2
 const STRIP_DAYS = 7
-const HERO_ACTIONS: Array<{ kind?: Kind; label: string }> = [
-  { kind: 'weight', label: 'Weigh' }, { kind: 'symptom', label: 'Observe' }, { kind: 'journal', label: 'Note' }, { label: 'More' },
+const HERO_ACTIONS: Array<{ kind?: Kind; offDay?: true; label: string }> = [
+  { kind: 'weight', label: 'Weigh' }, { offDay: true, label: 'Off day' }, { kind: 'symptom', label: 'Observe' }, { kind: 'journal', label: 'Note' }, { label: 'More' },
 ]
 
 interface CardProps {
   cat: CatSummary; canEdit: boolean; busy: boolean; week: DailyCheckin[]; meds: MedToday[]
-  onCheckin: () => void; onAllUsual: () => void; onGive: (m: MedToday) => void; onLog: (k?: Kind) => void
+  onOffDay: () => void; onMiss: (m: MedToday) => void; onLog: (k?: Kind) => void
 }
 
 function nextDue(c: CatSummary) {
@@ -211,50 +193,44 @@ function WeekStrip({ week }: { week: DailyCheckin[] }) {
     <span className="flex gap-1" aria-label="Last 7 days">
       {weekDays(week).map(({ day, c }) => {
         const flags = c ? checkinFlags(c) : []
-        return <span key={day} title={c ? (flags.join(', ') || 'All usual') : 'No check-in'}
-          className={cx('h-2 w-2 rounded-full', !c ? 'bg-stone-200' : flags.length ? 'bg-amber-400' : 'bg-emerald-500')} />
+        return <span key={day} title={flags.join(', ') || undefined}
+          className={cx('h-2 w-2 rounded-full', flags.length ? 'bg-amber-400' : 'bg-stone-200')} />
       })}
     </span>
   )
 }
 
-function CheckinState({ week, canEdit, busy, onCheckin, onAllUsual }: Pick<CardProps, 'week' | 'canEdit' | 'busy' | 'onCheckin' | 'onAllUsual'>) {
+/** Today's flags, only when today was recorded as off. */
+function OffDayToday({ week, canEdit, onOffDay }: Pick<CardProps, 'week' | 'canEdit' | 'onOffDay'>) {
   const today = week.find(k => k.day === localDay())
-  if (today) {
-    const flags = checkinFlags(today)
-    return (
-      <button onClick={canEdit ? onCheckin : undefined} disabled={!canEdit} className="flex w-full flex-wrap items-center gap-1.5 text-left">
-        {flags.length ? flags.map(f => <Chip key={f} tone="warn">{f}</Chip>) : <Chip tone="ok"><Check size={14} weight="bold" />All usual</Chip>}
-        {today.note && <span className="min-w-0 flex-1 truncate text-xs text-stone-500">{today.note}</span>}
-      </button>
-    )
-  }
-  if (!canEdit) return <span className="text-sm text-stone-500">No check-in today</span>
+  const flags = today ? checkinFlags(today) : []
+  if (!today || (!flags.length && !today.note)) return null
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <Button variant="secondary" disabled={busy} onClick={onAllUsual}><Check size={16} weight="bold" />All usual</Button>
-      <Button onClick={onCheckin}>Check in</Button>
-    </div>
+    <button onClick={canEdit ? onOffDay : undefined} disabled={!canEdit} className="flex w-full flex-wrap items-center gap-1.5 text-left">
+      {flags.map(f => <Chip key={f} tone="warn">{f}</Chip>)}
+      {today.note && <span className="min-w-0 flex-1 truncate text-xs text-stone-500">{today.note}</span>}
+    </button>
   )
 }
 
-function DoseRows({ meds, canEdit, busy, onGive }: Pick<CardProps, 'meds' | 'canEdit' | 'busy' | 'onGive'>) {
+function DoseRows({ meds, canEdit, busy, onMiss }: Pick<CardProps, 'meds' | 'canEdit' | 'busy' | 'onMiss'>) {
   if (!meds.length) return null
   return (
     <div className="divide-y divide-stone-100 rounded-xl bg-stone-50">
       {meds.map(m => {
         const target = m.times_per_day ?? 1
-        const done = m.given_today >= target
         const cd = courseDay(m.start_on, m.end_on)
         return (
           <div key={m.id} className="flex min-h-12 items-center gap-2.5 px-3 py-1.5">
             <CareGlyph kind="medication" size={18} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-semibold">{m.name}</div>
-              <div className="truncate text-xs text-stone-500">{[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${m.given_today}/${target} today`].filter(Boolean).join(' · ')}</div>
+              <div className="truncate text-xs text-stone-500">{[m.dose, cd && (cd.of ? `day ${cd.day} of ${cd.of}` : `day ${cd.day}`), `${target}x a day`].filter(Boolean).join(' · ')}</div>
             </div>
-            {done ? <Chip tone="ok">Done</Chip>
-              : canEdit && <button disabled={busy} onClick={() => onGive(m)} className="rounded-full bg-paw-500 px-3.5 py-1.5 text-xs font-semibold text-white active:scale-95 disabled:opacity-50">Give</button>}
+            {m.missed_today > 0 && <Chip tone="warn">{m.missed_today} missed</Chip>}
+            {canEdit && target - m.missed_today > 0 && (
+              <button disabled={busy} onClick={() => onMiss(m)} className="rounded-full px-3 py-1.5 text-xs font-semibold text-stone-700 ring-1 ring-inset ring-stone-300 active:scale-95 disabled:opacity-50">Missed</button>
+            )}
           </div>
         )
       })}
@@ -281,10 +257,10 @@ function CatHero(p: CardProps) {
       </Link>
       <div className="space-y-3 p-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">Today</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-stone-500">Last 7 days</span>
           <WeekStrip week={p.week} />
         </div>
-        <CheckinState {...p} />
+        <OffDayToday {...p} />
         <DoseRows {...p} />
         {due && (
           <Link to={`/cats/${cat.cat_id}/health`} className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-sm">
@@ -293,10 +269,10 @@ function CatHero(p: CardProps) {
           </Link>
         )}
         {p.canEdit && (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-1">
             {HERO_ACTIONS.map(a => (
-              <button key={a.label} onClick={() => p.onLog(a.kind)} className="flex flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
-                {a.kind ? <CareTile kind={a.kind} /> : <IconTile icon={G.paw} tone="stone" />}{a.label}
+              <button key={a.label} onClick={() => (a.offDay ? p.onOffDay() : p.onLog(a.kind))} className="flex flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
+                {a.kind ? <CareTile kind={a.kind} /> : <IconTile icon={a.offDay ? G.health : G.paw} tone={a.offDay ? 'amber' : 'stone'} />}{a.label}
               </button>
             ))}
           </div>
@@ -312,7 +288,7 @@ function CatRow(p: CardProps) {
   const a = attention(cat)
   const today = p.week.find(k => k.day === localDay())
   const flags = today ? checkinFlags(today) : []
-  const meds = p.meds.filter(m => m.given_today < (m.times_per_day ?? 1)).length
+  const missed = p.meds.reduce((n, m) => n + m.missed_today, 0)
   return (
     <div className="flex min-h-16 items-center gap-3 px-3 py-2.5">
       <Link to={`/cats/${cat.cat_id}`} className="flex min-w-0 flex-1 items-center gap-3 active:opacity-80">
@@ -327,10 +303,9 @@ function CatRow(p: CardProps) {
         </span>
       </Link>
       <span className="flex shrink-0 items-center gap-1 text-xs">
-        {meds > 0 && <Chip tone="brand"><CareGlyph kind="medication" size={14} />{meds}</Chip>}
-        {today ? <button onClick={p.canEdit ? p.onCheckin : undefined}><Chip tone={flags.length ? 'warn' : 'ok'}>{flags.length ? flags[0] + (flags.length > 1 ? ` +${flags.length - 1}` : '') : <><Check size={14} weight="bold" />Usual</>}</Chip></button>
-          : p.canEdit ? <button onClick={p.onCheckin} className="rounded-full bg-paw-500 px-3 py-1.5 font-semibold text-white active:scale-95">Check in</button>
-          : <Chip>Not yet</Chip>}
+        {missed > 0 && <Chip tone="warn"><CareGlyph kind="medication" size={14} />{missed} missed</Chip>}
+        {flags.length > 0 && <button onClick={p.canEdit ? p.onOffDay : undefined}><Chip tone="warn">{flags[0] + (flags.length > 1 ? ` +${flags.length - 1}` : '')}</Chip></button>}
+        {p.canEdit && !flags.length && <button onClick={p.onOffDay} className="rounded-full px-3 py-1.5 font-semibold text-stone-700 ring-1 ring-inset ring-stone-300 active:scale-95">Off day</button>}
       </span>
     </div>
   )
@@ -338,7 +313,6 @@ function CatRow(p: CardProps) {
 
 export function CatTile({ cat }: { cat: CatSummary }) {
   const url = useSignedUrl(cat.profile_thumbnail_path)
-  const fed = isTodayIso(cat.last_fed_at)
   const overdue = [cat.next_task_due, cat.next_vaccine_due, cat.next_parasite_due].some(d => dueLabel(d).tone === 'overdue')
   return (
     <Link to={`/cats/${cat.cat_id}`} className="block active:scale-[.98]">
@@ -351,10 +325,9 @@ export function CatTile({ cat }: { cat: CatSummary }) {
         <div className="p-3">
           <div className="truncate font-bold">{cat.name}</div>
           <div className="truncate text-xs text-stone-500">{[catAge(cat.date_of_birth, cat.dob_is_estimate), cat.last_weight_kg != null && kg(cat.last_weight_kg)].filter(Boolean).join(' · ')}</div>
-          <div className="mt-2 flex gap-1 text-xs">
-            <Chip tone={fed ? 'ok' : 'neutral'}>{fed ? <><Check size={14} weight="bold" />Fed</> : <><CareGlyph kind="feeding" size={14} />Not yet</>}</Chip>
-            {cat.active_medications > 0 && <Chip tone="brand"><CareGlyph kind="medication" size={14} />{cat.active_medications}</Chip>}
-          </div>
+          {cat.active_medications > 0 && (
+            <div className="mt-2 flex gap-1 text-xs"><Chip tone="brand"><CareGlyph kind="medication" size={14} />{cat.active_medications}</Chip></div>
+          )}
         </div>
       </Card>
     </Link>

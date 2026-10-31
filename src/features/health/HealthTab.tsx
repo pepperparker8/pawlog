@@ -5,20 +5,31 @@ import { useHousehold } from '../../household/HouseholdProvider'
 import { Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Sheet, Spinner, Textarea } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
+import { addDays, format, parseISO } from 'date-fns'
 import { courseDay, dateLabel, dueLabel, todayInput } from '../../lib/format'
+import type { TreatmentCourse } from '../../lib/types'
 import { LabSection } from '../labs/LabSection'
 import { useCatHealth, useDeleteHealthRow, useGiveDose, useMedsToday, useSaveHealthRow, type MedToday } from './api'
 
 export const PARASITE_KINDS: Array<[string, string]> = [['flea_tick', 'Flea and tick'], ['deworming', 'Deworming'], ['heartworm', 'Heartworm'], ['other', 'Other']]
 export const parasiteLabel = (k: string) => PARASITE_KINDS.find(([v]) => v === k)?.[1] ?? k
 
-type Table = 'cat_medications' | 'cat_conditions' | 'vet_visits' | 'vaccination_records' | 'parasite_treatments'
-type FieldDef = { key: string; label: string; type?: 'text' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox'; options?: Array<[string, string]>; required?: boolean; default?: string }
+type Table = 'cat_medications' | 'cat_conditions' | 'treatment_courses' | 'vet_visits' | 'vaccination_records' | 'parasite_treatments'
+type Options = Array<[string, string]>
+/** `from` fills a select with this cat's own rows; the first option clears the link. */
+type FieldDef = { key: string; label: string; type?: 'text' | 'date' | 'number' | 'textarea' | 'select' | 'checkbox'; options?: Options; from?: 'conditions' | 'courses'; required?: boolean; default?: string }
 const FORMS: Record<Table, { title: string; fields: FieldDef[] }> = {
   cat_medications: { title: 'Medication', fields: [
     { key: 'name', label: 'Name', required: true }, { key: 'dose', label: 'Dose' }, { key: 'frequency', label: 'Frequency' },
     { key: 'times_per_day', label: 'Times per day', type: 'number' }, { key: 'start_on', label: 'Start', type: 'date', default: 'today' },
-    { key: 'end_on', label: 'End', type: 'date' }, { key: 'reason', label: 'Reason', type: 'textarea' }, { key: 'active', label: 'Active', type: 'checkbox', default: 'true' } ] },
+    { key: 'end_on', label: 'End', type: 'date' }, { key: 'course_id', label: 'Course', type: 'select', from: 'courses' },
+    { key: 'reason', label: 'Reason', type: 'textarea' }, { key: 'active', label: 'Active', type: 'checkbox', default: 'true' } ] },
+  treatment_courses: { title: 'Treatment course', fields: [
+    { key: 'name', label: 'Name', required: true }, { key: 'started_on', label: 'Started', type: 'date', required: true, default: 'today' },
+    { key: 'planned_days', label: 'Planned days', type: 'number' }, { key: 'review_on', label: 'Review on', type: 'date' },
+    { key: 'condition_id', label: 'Condition', type: 'select', from: 'conditions' },
+    { key: 'status', label: 'Status', type: 'select', options: [['active', 'Active'], ['completed', 'Completed'], ['stopped', 'Stopped']], default: 'active' },
+    { key: 'ended_on', label: 'Ended on', type: 'date' }, { key: 'note', label: 'Note', type: 'textarea' } ] },
   cat_conditions: { title: 'Condition', fields: [
     { key: 'name', label: 'Condition', required: true }, { key: 'noted_on', label: 'Noted on', type: 'date', default: 'today' },
     { key: 'status', label: 'Status', type: 'select', options: [['active', 'Active'], ['monitoring', 'Monitoring'], ['resolved', 'Resolved']], default: 'active' }, { key: 'notes', label: 'Notes', type: 'textarea' } ] },
@@ -44,6 +55,7 @@ export function HealthTab({ catId }: { catId: string }) {
   const d = h.data
   const add = (table: Table) => canEdit && <button onClick={() => setEditing({ table })} className="flex items-center gap-1 rounded-full bg-paw-100 px-3 py-1.5 text-xs font-semibold text-paw-700"><Plus className="h-3.5 w-3.5" />Add</button>
   const due = (iso: string | null) => { const x = dueLabel(iso); return <Chip tone={x.tone === 'overdue' ? 'bad' : x.tone === 'soon' ? 'warn' : 'neutral'}>{x.text}</Chip> }
+  const options = { conditions: d.conditions.map((c): [string, string] => [c.id, c.name]), courses: d.courses.map((c): [string, string] => [c.id, c.name]) }
   return (
     <div className="space-y-5">
       <Link to={`/more/vet-summary?cat=${catId}`} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/70 active:bg-stone-50">
@@ -65,6 +77,16 @@ export function HealthTab({ catId }: { catId: string }) {
                 right={live && canEdit ? <GiveDose med={live} hid={current!.id} /> : <Chip tone={m.active ? 'brand' : 'neutral'}>{m.active ? 'active' : 'ended'}</Chip>} />
             )
           }) : <Empty text="No medications" />}
+        </Card>
+      </section>
+      <section>
+        <SectionTitle action={add('treatment_courses')}>Treatment courses</SectionTitle>
+        <Card className="divide-y divide-stone-100 p-0">
+          {d.courses.length ? d.courses.map(c => (
+            <RowItem key={c.id} onClick={() => canEdit && setEditing({ table: 'treatment_courses', row: c as unknown as Record<string, unknown> })}
+              title={c.name} sub={courseSub(c, d.conditions.find(x => x.id === c.condition_id)?.name)}
+              right={c.status === 'active' && c.review_on ? due(c.review_on) : <Chip tone={c.status === 'active' ? 'brand' : 'neutral'}>{c.status}</Chip>} />
+          )) : <Empty text="No treatment courses" />}
         </Card>
       </section>
       <section>
@@ -100,9 +122,16 @@ export function HealthTab({ catId }: { catId: string }) {
         </Card>
       </section>
       <LabSection catId={catId} />
-      {editing && <HealthSheet table={editing.table} row={editing.row} catId={catId} hid={current!.id} onClose={() => setEditing(null)} />}
+      {editing && <HealthSheet table={editing.table} row={editing.row} options={options} catId={catId} hid={current!.id} onClose={() => setEditing(null)} />}
     </div>
   )
+}
+
+function courseSub(c: TreatmentCourse, condition?: string) {
+  const end = c.status === 'active' ? (c.planned_days ? format(addDays(parseISO(c.started_on), c.planned_days - 1), 'yyyy-MM-dd') : null) : c.ended_on
+  const cd = c.status === 'active' ? courseDay(c.started_on, end) : null
+  const span = cd ? (cd.of ? `Day ${cd.day} of ${cd.of}` : `Day ${cd.day}`) : `${dateLabel(c.started_on)}${end ? ` to ${dateLabel(end)}` : ''}`
+  return [span, condition].filter(Boolean).join(' · ')
 }
 
 function GiveDose({ med, hid }: { med: MedToday; hid: string }) {
@@ -127,7 +156,9 @@ function RowItem({ title, sub, right, onClick }: { title: string; sub?: string; 
 }
 const Empty = ({ text }: { text: string }) => <p className="px-4 py-4 text-center text-sm text-stone-400">{text}</p>
 
-function HealthSheet({ table, row, catId, hid, onClose }: { table: Table; row?: Record<string, unknown>; catId: string; hid: string; onClose: () => void }) {
+function HealthSheet({ table, row, options, catId, hid, onClose }: {
+  table: Table; row?: Record<string, unknown>; options: Record<'conditions' | 'courses', Options>; catId: string; hid: string; onClose: () => void
+}) {
   const def = FORMS[table]
   const save = useSaveHealthRow(table, hid, catId)
   const del = useDeleteHealthRow(table, hid, catId)
@@ -165,7 +196,7 @@ function HealthSheet({ table, row, catId, hid, onClose }: { table: Table; row?: 
           if (x.type === 'checkbox') return <label key={x.key} className="col-span-2 flex items-center gap-2 text-sm"><input type="checkbox" checked={f[x.key] === 'true'} onChange={e => setF(s => ({ ...s, [x.key]: String(e.target.checked) }))} />{x.label}</label>
           return (
             <Field key={x.key} label={x.label} className={wide ? 'col-span-2' : ''}>
-              {x.type === 'textarea' ? <Textarea {...common} /> : x.type === 'select' ? <Select {...common}>{x.options!.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
+              {x.type === 'textarea' ? <Textarea {...common} /> : x.type === 'select' ? <Select {...common}>{(x.from ? [['', 'None'] as [string, string], ...options[x.from]] : x.options!).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
                 : <Input type={x.type ?? 'text'} step={x.type === 'number' ? 'any' : undefined} {...common} />}
             </Field>)
         })}

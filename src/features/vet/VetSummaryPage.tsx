@@ -47,7 +47,7 @@ export function VetSummaryPage() {
   return (
     <div className="space-y-4">
       <PageHeader title="Vet summary" back action={
-        <Button variant="secondary" className="print:hidden" aria-label="Print summary" onClick={() => { toast.show('🩺 Ready for the vet'); window.setTimeout(() => window.print(), 300) }}>
+        <Button variant="secondary" className="print:hidden" aria-label="Print summary" onClick={() => { toast.show('Ready to print'); window.setTimeout(() => window.print(), 300) }}>
           <Printer className="h-4 w-4" />
         </Button>} />
       <div className="flex gap-2 print:hidden">

@@ -23,6 +23,7 @@ import { useMedsToday, useMissDose, type MedToday } from '../health/api'
 import { checkinFlags, localDay, useCheckins } from '../checkins/api'
 import { CheckinSheet } from '../checkins/CheckinSheet'
 import { attention, byAttention } from './attention'
+import { WeekSection } from './WeekCard'
 
 export function HomePage() {
   const { current, canEdit } = useHousehold()
@@ -90,6 +91,8 @@ export function HomePage() {
           </Card>
         </section>
       )}
+
+      <WeekSection cats={active} />
 
       {(act.length > 0 || info.length > 0) && (
         <section>

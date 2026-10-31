@@ -7,7 +7,7 @@ export function PageHeader({ title, subtitle, back, action }: { title: ReactNode
   return (
     <header className="mb-4 flex items-center gap-3">
       {back && (
-        <button onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))} className="rounded-full p-2 hover:bg-stone-100" aria-label="Back">
+        <button onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))} className="rounded-full p-2 hover:bg-stone-100 print:hidden" aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </button>
       )}

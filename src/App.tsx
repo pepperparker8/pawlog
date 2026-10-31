@@ -30,6 +30,7 @@ const AchievementsPage = lazy(() => import('./features/gamification/Achievements
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage').then(x => ({ default: x.NotificationsPage })))
 const SearchPage = lazy(() => import('./features/search/SearchPage').then(x => ({ default: x.SearchPage })))
 const VetSummaryPage = lazy(() => import('./features/vet/VetSummaryPage').then(x => ({ default: x.VetSummaryPage })))
+const CourseReportPage = lazy(() => import('./features/vet/CourseReportPage').then(x => ({ default: x.CourseReportPage })))
 const LearnPage = lazy(() => import('./features/learn/LearnPage').then(x => ({ default: x.LearnPage })))
 const ArticlePage = lazy(() => import('./features/learn/LearnPage').then(x => ({ default: x.ArticlePage })))
 
@@ -60,6 +61,7 @@ export default function App() {
                     <Route path="more/notifications" element={<NotificationsPage />} />
                     <Route path="more/search" element={<SearchPage />} />
                     <Route path="more/vet-summary" element={<VetSummaryPage />} />
+                    <Route path="more/course-report" element={<CourseReportPage />} />
                     <Route path="learn" element={<LearnPage />} />
                     <Route path="learn/:slug" element={<ArticlePage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />

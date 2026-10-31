@@ -65,6 +65,15 @@ export function HealthTab({ catId }: { catId: string }) {
         </div>
         <CaretRight className="h-4 w-4 text-stone-400" />
       </Link>
+      {d.courses.length > 0 && (
+        <Link to={`/more/course-report?cat=${catId}`} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-stone-200/70 active:bg-stone-50">
+          <IconTile icon={G.clipboard} tone="paw" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold">Course review</div>
+          </div>
+          <CaretRight className="h-4 w-4 text-stone-400" />
+        </Link>
+      )}
       <section>
         <SectionTitle action={add('cat_medications')}>Medications</SectionTitle>
         <Card className="divide-y divide-stone-100 p-0">

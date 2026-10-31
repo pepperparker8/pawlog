@@ -7,14 +7,15 @@ PawLog records observations. It does not diagnose, score health, or replace a ve
 ## Features
 
 - Households with owner, caregiver and viewer roles, invites by link, multiple households per user
-- Multi-cat dashboard with attention center, today counters, daily quests and "on this day" memories
+- Multi-cat dashboard with attention center, today counters, daily quests, a seven-day summary per cat and "on this day" memories
 - Quick Log bottom sheet: feeding, water, litter, weight, symptoms, medication, behavior, grooming, play, journal; log for one cat or everyone at once
 - Cat profile with timeline, health records, growth chart, photos and a printable passport
 - Unified timeline with filters and pagination
 - Health records: medications, conditions, vet visits, vaccinations, parasite treatments
-- Exception-only logging: off days and missed doses only; trends tab with weight chart, off-day bands, calendar, treatment courses and sourced insights
+- Exception-only logging: off days and missed doses only; trends tab with weight chart, off-day bands, calendar, treatment courses and sourced insights; printable course report for the vet review
 - Care scheduler with recurring tasks and assignees
-- Food profiles, photo library in private Storage, global search, vet summary
+- Photos in private Storage grouped by the cat's age, with date or age entry, camera date read from EXIF, a then-and-now pair and a profile photo
+- Food profiles, global search, vet summary
 - Gamification: XP ledger, levels, badges, quests, forgiving streaks with freezes
 - Notifications, realtime refresh, PWA install and an offline log queue
 

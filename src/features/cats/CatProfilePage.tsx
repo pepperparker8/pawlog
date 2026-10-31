@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, CaretRight, CircleNotch, Pencil, CareTile, CareGlyph, G } from '../../components/icons'
+import { ArrowLeft, Camera, CaretRight, Pencil, CareTile, CareGlyph, G } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, EmptyState, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -65,17 +65,14 @@ export function CatProfilePage() {
           <div className="relative shrink-0">
             {live ? (
               <PhotoPicker hid={hid} catId={id} setAsProfile label={url.data ? 'Change profile photo' : 'Add profile photo'} className="block rounded-full active:scale-95">
-                {busy => (
-                  <span className="relative block">
-                    {url.data ? <Avatar name={c.name} src={url.data} size={84} /> : (
-                      <span className="flex h-[84px] w-[84px] flex-col items-center justify-center rounded-full border-2 border-dashed border-paw-300 bg-white text-paw-600">
-                        <Camera className="h-6 w-6" /><span className="text-[10px] font-semibold">Add photo</span>
-                      </span>
-                    )}
-                    {url.data && <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-paw-500 text-white ring-2 ring-white">{busy ? <CircleNotch className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}</span>}
-                    {busy && !url.data && <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70"><CircleNotch className="h-6 w-6 animate-spin text-paw-500" /></span>}
-                  </span>
-                )}
+                <span className="relative block">
+                  {url.data ? <Avatar name={c.name} src={url.data} size={84} /> : (
+                    <span className="flex h-[84px] w-[84px] flex-col items-center justify-center rounded-full border-2 border-dashed border-paw-300 bg-white text-paw-600">
+                      <Camera className="h-6 w-6" /><span className="text-[10px] font-semibold">Add photo</span>
+                    </span>
+                  )}
+                  {url.data && <span className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-paw-500 text-white ring-2 ring-white"><Camera className="h-3.5 w-3.5" /></span>}
+                </span>
               </PhotoPicker>
             ) : <Avatar name={c.name} src={url.data} size={84} />}
           </div>
@@ -97,7 +94,7 @@ export function CatProfilePage() {
               </button>
             ))}
             <PhotoPicker hid={hid} catId={id} multiple label="Add photos" className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
-              {busy => <>{busy ? <span className="flex h-10 w-10 items-center justify-center"><CircleNotch className="h-5 w-5 animate-spin text-paw-500" /></span> : <CareTile kind="photo" />}Photo</>}
+              <CareTile kind="photo" />Photo
             </PhotoPicker>
           </div>
         )}

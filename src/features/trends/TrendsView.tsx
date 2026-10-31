@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import {
   addDays, addMonths, differenceInCalendarDays, eachDayOfInterval, eachMonthOfInterval, eachWeekOfInterval, endOfDay, endOfMonth, endOfWeek, format, isSameMonth,
@@ -112,7 +112,10 @@ function CourseCard({ course, weights, missed, labs, days }: { course: Treatment
           <div key={label}><div className="text-sm font-bold">{value}</div><div className="text-[10px] text-stone-500">{label}</div></div>
         ))}
       </div>
-      <div className="mt-2 text-xs text-stone-500">Started {dateLabel(course.started_on)}{course.review_on ? ` · Review ${dateLabel(course.review_on)}` : ''}</div>
+      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-stone-500">
+        <span>Started {dateLabel(course.started_on)}{course.review_on ? ` · Review ${dateLabel(course.review_on)}` : ''}</span>
+        <Link to={`/more/course-report?cat=${course.cat_id}&course=${course.id}`} className="flex shrink-0 items-center gap-0.5 font-semibold text-paw-700">Report for vet<CaretRight className="h-3.5 w-3.5" /></Link>
+      </div>
     </Card>
   )
 }

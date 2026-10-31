@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query'
 import { supabase, PHOTO_BUCKET } from '../../lib/supabase'
 import { keys, queryClient, invalidateHousehold } from '../../lib/queryClient'
+import { format, parseISO } from 'date-fns'
 import type { Photo } from '../../lib/types'
 
 const PAGE = 30
@@ -75,5 +76,21 @@ export function useSetProfilePhoto(hid: string) {
       if (error) throw error
     },
     onSuccess: (_r, v) => { invalidateHousehold(hid); void queryClient.invalidateQueries({ queryKey: keys.cat(v.catId) }) },
+  })
+}
+
+/** Keeps the original time when the day is unchanged; a newly chosen day is stored at local noon so it cannot shift a day across zones. */
+export function takenAtFor(day: string, original: string): string {
+  const o = parseISO(original)
+  return format(o, 'yyyy-MM-dd') === day ? o.toISOString() : new Date(`${day}T12:00:00`).toISOString()
+}
+
+export function useUpdatePhoto(hid: string) {
+  return useMutation({
+    mutationFn: async ({ id, taken_at, caption }: { id: string; taken_at: string; caption: string | null }) => {
+      const { error } = await supabase.from('photos').update({ taken_at, caption }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => invalidateHousehold(hid),
   })
 }

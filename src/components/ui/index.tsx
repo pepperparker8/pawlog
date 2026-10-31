@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 import { CircleNotch, X, G, IconTile, type Glyph, type Icon, type Tone } from '../icons'
 
@@ -43,9 +44,9 @@ export function Select({ className, children, ...rest }: SelectHTMLAttributes<HT
   return <select className={cx(control, className)} {...rest}>{children}</select>
 }
 
-export function Card({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
+export function Card({ children, className, onClick, 'aria-label': label }: { children: ReactNode; className?: string; onClick?: () => void; 'aria-label'?: string }) {
   return (
-    <div onClick={onClick} className={cx('rounded-2xl bg-white shadow-[0_1px_3px_rgba(28,25,23,0.06)] ring-1 ring-stone-200/70', !/(^|\s)p-\d/.test(className ?? '') && 'p-4', onClick && 'cursor-pointer active:bg-stone-50', className)}>
+    <div onClick={onClick} aria-label={label} role={label ? 'region' : undefined} className={cx('rounded-2xl bg-white shadow-[0_1px_3px_rgba(28,25,23,0.06)] ring-1 ring-stone-200/70', !/(^|\s)p-\d/.test(className ?? '') && 'p-4', onClick && 'cursor-pointer active:bg-stone-50', className)}>
       {children}
     </div>
   )
@@ -89,7 +90,8 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey) }
   }, [open, onClose])
   if (!open) return null
-  return (
+  // Portalled so a transformed or sticky ancestor cannot trap the fixed overlay beneath page content.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label={title}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="animate-sheet relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-white shadow-xl sm:max-w-lg sm:rounded-3xl">
@@ -101,7 +103,8 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
         <div className={cx('overflow-y-auto overscroll-contain px-4', footer ? 'pb-3' : 'safe-bottom-pad pb-6')}>{children}</div>
         {footer && <div className="safe-bottom-pad border-t border-stone-100 bg-white px-4 pt-3 sm:rounded-b-3xl">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

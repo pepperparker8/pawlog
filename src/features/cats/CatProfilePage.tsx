@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Camera, CaretRight, Pencil, CareTile, CareGlyph, G } from '../../components/icons'
+import { ArrowLeft, Camera, CaretRight, Pencil, CareTile, CareGlyph, G, IconTile } from '../../components/icons'
 import { useHousehold } from '../../household/HouseholdProvider'
 import { Avatar, Button, Card, Chip, EmptyState, SectionTitle, Spinner, cx } from '../../components/ui'
 import { useToast } from '../../components/ui/Toast'
@@ -87,7 +87,7 @@ export function CatProfilePage() {
           </div>
         </div>
         {live && (
-          <div className="mt-4 grid grid-cols-4 gap-1.5">
+          <div className="mt-4 grid grid-cols-5 gap-1">
             {ACTIONS.map(a => (
               <button key={a.kind} onClick={() => setLog({ kind: a.kind })} className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
                 <CareTile kind={a.kind} />{a.label}
@@ -96,16 +96,19 @@ export function CatProfilePage() {
             <PhotoPicker hid={hid} catId={id} multiple label="Add photos" className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
               <CareTile kind="photo" />Photo
             </PhotoPicker>
+            <Link to={`/cats/${id}/ask`} replace className="flex flex-col items-center gap-1 rounded-2xl py-1.5 text-[11px] font-semibold text-stone-700 transition-transform hover:bg-stone-50 active:scale-95">
+              <IconTile icon={G.book} tone="violet" />Ask
+            </Link>
           </div>
         )}
       </header>
 
-      <TabBar id={id} active={tab} ask={!!current?.ai_enabled} />
+      <TabBar id={id} active={tab} />
 
       <div className="pt-4">
         <Routes>
           <Route index element={<Overview id={id} hid={hid} s={s} canLog={live} />} />
-          {current?.ai_enabled && <Route path="ask" element={<AskTab catId={id} catName={c.name} />} />}
+          <Route path="ask" element={<AskTab catId={id} catName={c.name} />} />
           <Route path="health" element={<HealthTab catId={id} />} />
           <Route path="trends" element={<Suspense fallback={<Spinner />}><TrendsView catId={id} catName={c.name} /></Suspense>} />
           <Route path="growth" element={<Navigate to={`/cats/${id}/trends`} replace />} />
@@ -121,14 +124,14 @@ export function CatProfilePage() {
 }
 
 /** Absolute links: relative ones resolve against the current splat URL in React Router 7 and stack up (/health/growth). */
-function TabBar({ id, active, ask }: { id: string; active: string; ask: boolean }) {
+function TabBar({ id, active }: { id: string; active: string }) {
   const bar = useRef<HTMLDivElement>(null)
   useEffect(() => {
     bar.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' })
   }, [active])
   return (
     <nav ref={bar} aria-label="Cat sections" className="scrollbar-none sticky top-0 z-30 -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 bg-white/95 px-3 py-1.5 backdrop-blur">
-      {TABS.filter(([path]) => ask || path !== 'ask').map(([path, label]) => (
+      {TABS.map(([path, label]) => (
         <NavLink key={path} to={`/cats/${id}${path ? `/${path}` : ''}`} end replace
           className={({ isActive }) => cx('shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition', isActive ? 'bg-stone-800 text-white' : 'text-stone-600 active:bg-stone-200')}>
           {label}

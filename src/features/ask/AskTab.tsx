@@ -6,9 +6,27 @@ import { useHousehold } from '../../household/HouseholdProvider'
 import { friendlyError } from '../../lib/errors'
 import { ago } from '../../lib/format'
 import type { AskMessage } from '../../lib/types'
-import { URGENCY, useAsk, useAskMessages, useClearAsk } from './api'
+import { URGENCY, useAsk, useAskMessages, useClearAsk, useSetAiEnabled } from './api'
 
 export function AskTab({ catId, catName }: { catId: string; catName: string }) {
+  const { current } = useHousehold()
+  if (!current?.ai_enabled) return <AskOff />
+  return <AskThread catId={catId} catName={catName} />
+}
+
+function AskOff() {
+  const { current, isOwner } = useHousehold()
+  const setAi = useSetAiEnabled(current?.id ?? '')
+  return (
+    <div className="space-y-2">
+      <EmptyState icon={G.book} tone="violet" title="Ask PawLog is off"
+        action={isOwner ? <Button loading={setAi.isPending} onClick={() => setAi.mutate(true)}>Turn on</Button> : undefined} />
+      <ErrorNote message={setAi.error ? friendlyError(setAi.error) : null} />
+    </div>
+  )
+}
+
+function AskThread({ catId, catName }: { catId: string; catName: string }) {
   const { canEdit } = useHousehold()
   const msgs = useAskMessages(catId)
   const ask = useAsk(catId)

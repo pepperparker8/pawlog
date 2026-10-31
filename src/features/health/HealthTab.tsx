@@ -6,6 +6,7 @@ import { Button, Card, Chip, ErrorNote, Field, Input, SectionTitle, Select, Shee
 import { useToast } from '../../components/ui/Toast'
 import { friendlyError } from '../../lib/errors'
 import { courseDay, dateLabel, dueLabel, todayInput } from '../../lib/format'
+import { LabSection } from '../labs/LabSection'
 import { useCatHealth, useDeleteHealthRow, useGiveDose, useMedsToday, useSaveHealthRow, type MedToday } from './api'
 
 export const PARASITE_KINDS: Array<[string, string]> = [['flea_tick', 'Flea and tick'], ['deworming', 'Deworming'], ['heartworm', 'Heartworm'], ['other', 'Other']]
@@ -98,6 +99,7 @@ export function HealthTab({ catId }: { catId: string }) {
           )) : <Empty text="No vet visits yet" />}
         </Card>
       </section>
+      <LabSection catId={catId} />
       {editing && <HealthSheet table={editing.table} row={editing.row} catId={catId} hid={current!.id} onClose={() => setEditing(null)} />}
     </div>
   )

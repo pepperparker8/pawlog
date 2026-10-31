@@ -20,6 +20,7 @@ Postgres on Supabase. All application tables live in `public` and have row level
 | `017` to `019` | Content fixes, household-scoped reminder sweep, XP revoked when a log is deleted |
 | `020_daily_checkins.sql` | `daily_checkins`, check-ins on the timeline, check-in pattern rules |
 | `021_ask.sql` | `households.ai_enabled`, `ask_messages` |
+| `022_lab_results.sql` | `lab_reads`, `lab_reports`, `lab_results`, link checks, `save_lab_report` RPC |
 
 Migrations are append-only. Changes to an applied migration go in a new numbered file.
 
@@ -47,6 +48,7 @@ Every tenant row stores `household_id`. Rows tied to a cat also store `cat_id`, 
 | Media | `photos` |
 | Gamification | `xp_rules`, `level_config`, `xp_transactions`, `user_stats`, `household_stats`, `cat_stats`, `badges`, `user_badges`, `quest_templates`, `quest_completions` |
 | Ask | `ask_messages` (questions and answers per cat, written by the `ask` edge function, kept 30 days). `households.ai_enabled` switches Ask on, owner only. |
+| Labs | `lab_reports` (sample date, lab name, optional vet visit, image path), `lab_results` (one row per analyte: value, unit, printed range, flag), `lab_reads` (model drafts written by the `lab-read` edge function, kept 30 days) |
 | Notifications | `notifications`, `notification_preferences` |
 | Audit | `audit_logs` |
 
@@ -74,6 +76,7 @@ Views use `security_invoker` so RLS of the underlying tables applies.
 | `detect_patterns(household_id)` | Deterministic attention items, listed below |
 | `on_this_day(household_id)` | Photos and journal entries from the same date in earlier years |
 | `search_household(household_id, q)` | Search over cats, logs, journal and health records |
+| `save_lab_report(p)` | Saves a confirmed lab report with its rows, optionally creating a vet visit. A repeated `client_event_id` returns the saved report. |
 
 ## Pattern rules
 
@@ -100,6 +103,7 @@ Bucket `cat-photos`, private, image types only. Object path:
 
 ```
 household/{household_id}/cats/{cat_id}/photos/{photo_id}
+household/{household_id}/cats/{cat_id}/labs/{report_id}.jpg
 ```
 
 Storage policies parse the household id from the path and check membership. The client reads images through signed URLs.

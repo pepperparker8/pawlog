@@ -132,8 +132,9 @@ Generic treatment course on any active condition: start date, planned length, da
 |---|---|---|---|
 | 6 (done) | Daily check-in, baseline alerts, home cards, XP switch, one-tap doses | 020 `daily_checkins` | 1 to 2 sessions |
 | 7 (built) | Ask PawLog v1: edge function, owner switch, urgency header, red-flag check, cap, lazy purge. One thread per cat, context sent with each question instead of tools. | 021 `ask_messages`, household `ai_enabled` | 2 sessions |
-| 8 | Capture from text, photo and PDF into drafts; weekly story | 022 `weekly_stories`, draft status on log tables | 2 sessions |
-| 9 | Weekly and monthly check-ins, treatment course, life-stage reminders, vet summary with questions to ask | 023 `wellbeing_checks`, 024 `treatment_courses` | 2 sessions |
+| 8 (built) | Lab results from photo or PDF: crop, Sonnet 5.5 draft, confirm, printed-range status, trend, questions for the vet | 022 `lab_reads`, `lab_reports`, `lab_results` | 1 session |
+| 9 | Capture from text into drafts; weekly story | 023 `weekly_stories`, draft status on log tables | 2 sessions |
+| 10 | Weekly and monthly check-ins, treatment course, life-stage reminders, vet summary with questions to ask | 024 `wellbeing_checks`, 025 `treatment_courses` | 2 sessions |
 
 Each phase ships on its own and keeps existing data and tests.
 
@@ -150,7 +151,7 @@ Each phase ships on its own and keeps existing data and tests.
 
 ## 7. Decisions
 
-1. Model: Haiku 5.5.
+1. Model: Haiku 5.5 for Ask, Sonnet 5.5 for lab papers.
 2. Who can ask: owners and caregivers.
 3. Ask history: 30 days.
 4. XP: off by default, switch in More.

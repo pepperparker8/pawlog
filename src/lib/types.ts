@@ -92,3 +92,15 @@ export interface HouseholdToday { date: string; cats: number; logs_today: number
 export interface Notification { id: string; household_id: string; user_id: string; cat_id: string | null; kind: string; title: string; body: string | null; link: string | null; read_at: string | null; created_at: string }
 export interface SearchHit { kind: string; id: string; cat_id: string | null; title: string; snippet: string; occurred_at: string }
 export interface Milestone { id: string; cat_id: string; code: string; label: string; reached_at: string; archived_at: string | null }
+
+export interface LabRow {
+  panel: string | null; analyte: string; analyte_key: string; value: number | null; value_text: string | null; unit: string | null
+  ref_low: number | null; ref_high: number | null; ref_text: string | null; printed_flag: string | null; about: string | null
+}
+export interface LabDraft { is_lab_report: boolean; species: 'cat' | 'not_cat' | 'unknown'; sampled_on: string | null; date_text: string | null; lab_name: string | null; rows: LabRow[] }
+export interface LabRead { id: string; draft: LabDraft }
+export interface LabResult extends LabRow { id: string; report_id: string; cat_id: string; position: number }
+export interface LabReport {
+  id: string; household_id: string; cat_id: string; vet_visit_id: string | null; sampled_on: string; lab_name: string | null
+  storage_path: string | null; note: string | null; created_at: string; lab_results: LabResult[]
+}

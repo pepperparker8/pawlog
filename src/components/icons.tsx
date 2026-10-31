@@ -1,5 +1,5 @@
 import {
-  ArrowLeftIcon, BellIcon, BookOpenIcon, BowlFoodIcon, CalendarCheckIcon, CameraIcon, CaretDownIcon, CaretRightIcon, CatIcon,
+  ArrowClockwiseIcon, ArrowLeftIcon, BellIcon, BookOpenIcon, BowlFoodIcon, CalendarCheckIcon, CameraIcon, CaretDownIcon, CaretRightIcon, CatIcon,
   CheckIcon, CircleNotchIcon, ClipboardTextIcon, ClockCounterClockwiseIcon, CopyIcon, DotsThreeIcon, EyeIcon, FileTextIcon,
   HeartIcon, HouseIcon, ImagesIcon, InfoIcon, LinkIcon,
   MagnifyingGlassIcon, PencilSimpleIcon, PlantIcon, PlusIcon, PrinterIcon, ScalesIcon,
@@ -14,7 +14,7 @@ const cx = (...c: Array<string | false | undefined>) => c.filter(Boolean).join('
 export type { Icon, Glyph }
 export { G }
 export {
-  ArrowLeftIcon as ArrowLeft, BellIcon as Bell, BookOpenIcon as BookOpen, BowlFoodIcon as Bowl, CalendarCheckIcon as CalendarCheck,
+  ArrowClockwiseIcon as RotateRight, ArrowLeftIcon as ArrowLeft, BellIcon as Bell, BookOpenIcon as BookOpen, BowlFoodIcon as Bowl, CalendarCheckIcon as CalendarCheck,
   CameraIcon as Camera, CaretDownIcon as CaretDown, CaretRightIcon as CaretRight, CatIcon as Cat, CheckIcon as Check,
   CircleNotchIcon as CircleNotch, ClipboardTextIcon as Clipboard, ClockCounterClockwiseIcon as History, CopyIcon as Copy,
   DotsThreeIcon as Dots, EyeIcon as Eye, FileTextIcon as FileText, HeartIcon as Heart, HouseIcon as House, ImagesIcon as Images,

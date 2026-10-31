@@ -46,6 +46,15 @@ PawLog does not produce diagnoses or health scores, including in Ask answers. Pa
 - A rolling 24-hour cap per household (`ASK_DAILY_CAP`, default 30) limits cost.
 - Red-flag wording in the question, or two days of not eating in check-ins, sets the answer to Emergency regardless of the model output. Answers carry no diagnosis or doses.
 
+## Lab results
+
+- The owner crops the lab paper before anything is sent, so owner name, phone and address can be left out. The crop is re-encoded through a canvas, which drops EXIF location and device data.
+- The `lab-read` edge function sends only the cropped JPEG to the Anthropic API, with the caller's JWT, so RLS limits it to the caller's household. Viewers cannot read papers.
+- The model returns draft rows only. Nothing is saved until a member confirms or edits them. In or out of range is computed in the app from the lab's printed range, never by the model.
+- The confirmed image is stored in the private `cat-photos` bucket under the household path and read through signed URLs. Deleting a report deletes its image.
+- Drafts in `lab_reads` older than 30 days are deleted on the next read. A rolling 24-hour cap per household (`LAB_DAILY_CAP`, default 20) limits cost. `LAB_MODEL` selects the model.
+- The report view shows ranges, trends, a short description of each test and questions for the vet. It gives no diagnosis or combined score.
+
 ## Tests
 
 `supabase/tests/rls.sql` runs inside a transaction and rolls back. It checks that:
